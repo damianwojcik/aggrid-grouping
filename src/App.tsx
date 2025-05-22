@@ -1,13 +1,11 @@
-"use client";
-
+// @ts-expect-error
 import React, { useState, useMemo, useRef } from "react";
-import { createRoot } from "react-dom/client";
 import { AgGridReact } from "ag-grid-react";
 import {
   ClientSideRowModelModule,
-  ColDef,
+  type ColDef,
   ModuleRegistry,
-  GridReadyEvent,
+  type GridReadyEvent,
   ColumnApiModule,
   RowStyleModule,
 } from "ag-grid-community";
@@ -62,8 +60,8 @@ const autoGroupColumnDef = {
 
 const allGroupableFields = ["strategy", "source", "ccy", "startDate"];
 
-const transformFiles = (files, groupFields: string[]) => {
-  return files.map((file) => {
+const transformFiles = (files: any, groupFields: string[]) => {
+  return files.map((file: any) => {
     const groupPrefix = groupFields.map((field) => file[field] || "Unknown");
     return {
       ...file,
@@ -73,7 +71,8 @@ const transformFiles = (files, groupFields: string[]) => {
     };
   });
 };
-const GridExample = () => {
+
+export const App = () => {
   const apiRef = useRef<GridReadyEvent["api"] | null>(null);
   const [groupByFields, setGroupByFields] = useState<string[]>([]);
   const [aggregate, setAggregate] = useState(true);
@@ -169,6 +168,7 @@ const GridExample = () => {
           const node = params.node;
           const isChildInPackage =
             node.level > groupByFields.length &&
+            // @ts-expect-error
             node.parent?.childrenAfterGroup?.length > 0;
 
           return isChildInPackage ? "row-in-package" : "";
@@ -193,6 +193,3 @@ const GridExample = () => {
     </div>
   );
 };
-
-const root = createRoot(document.getElementById("root")!);
-root.render(<GridExample />);
