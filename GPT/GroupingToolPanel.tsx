@@ -1,21 +1,34 @@
-import type {
+import {
+  Column,
+  GridApi,
   IToolPanelComp,
   IToolPanelParams,
-  GridApi,
-  Column,
-} from 'ag-grid-community';
-import s from './styles.m.less';
+} from "ag-grid-community";
+
+interface AggregationItem {
+  id: string;
+  name: string;
+  func: string;
+}
+
+interface CustomToolPanelParams extends IToolPanelParams {
+  groupByFields: string[];
+  setGroupByFields: React.Dispatch<React.SetStateAction<string[]>>;
+  aggregations: AggregationItem[];
+  activeAggregations: Set<string>;
+  setActiveAggregations: React.Dispatch<React.SetStateAction<Set<string>>>;
+}
 
 export class CustomGroupingToolPanel implements IToolPanelComp {
   private eGui!: HTMLDivElement;
   private api!: GridApi;
-  private selectedGroupFields: string[] = [];
-  private selectedAggregations: Set<string> = new Set();
+  private params!: CustomToolPanelParams;
 
-  init(params: IToolPanelParams): void {
+  init(params: CustomToolPanelParams): void {
+    this.params = params;
     this.api = params.api;
-    this.eGui = document.createElement('div');
-    this.eGui.classList.add(s.wrapper);
+    this.eGui = document.createElement("div");
+    this.eGui.classList.add("wrapper");
     this.render();
   }
 
@@ -28,7 +41,15 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
   }
 
   private render(): void {
-    this.eGui.innerHTML = '';
+    const {
+      groupByFields,
+      setGroupByFields,
+      activeAggregations,
+      setActiveAggregations,
+      aggregations,
+    } = this.params;
+
+    this.eGui.innerHTML = "";
 
     const allColumns = this.api.getColumns() || [];
     const groupableColumns = allColumns.filter((col) => {
@@ -36,108 +57,149 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
       return colDef.isGroupable === true;
     });
 
-    // === Row Groups Section ===
-    const rowGroupSection = document.createElement('div');
-    rowGroupSection.classList.add(s.section);
-
-    const rowGroupTitle = document.createElement('div');
-    rowGroupTitle.textContent = 'Row Groups';
-    rowGroupTitle.classList.add('ag-group-title', s.sectionTitle);
-    rowGroupSection.appendChild(rowGroupTitle);
-
     if (groupableColumns.length === 0) {
-      const msg = document.createElement('div');
-      msg.textContent = 'No groupable columns available';
-      msg.classList.add(s.msgNoColumns);
-      rowGroupSection.appendChild(msg);
-    } else {
-      if (this.selectedGroupFields.length > 0) {
-        const orderInfo = document.createElement('div');
-        orderInfo.textContent = `Grouping order: ${this.selectedGroupFields.join(' → ')}`;
-        orderInfo.classList.add(s.groupOrder);
-        rowGroupSection.appendChild(orderInfo);
-      }
-
-      groupableColumns.forEach((col: Column) => {
-        const colId = col.getColId();
-        const colDef = col.getColDef();
-        const isChecked = this.selectedGroupFields.includes(colId);
-        const isDisabled = !isChecked && this.selectedGroupFields.length >= 3;
-
-        const label = document.createElement('label');
-        label.classList.add('ag-label', s.checkboxLabel);
-
-        const wrapper = document.createElement('span');
-        wrapper.classList.add('ag-checkbox-input-wrapper');
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = isChecked;
-        checkbox.disabled = isDisabled;
-        checkbox.classList.add('ag-input-field-input', 'ag-checkbox');
-
-        checkbox.addEventListener('change', () => {
-          if (checkbox.checked) {
-            if (this.selectedGroupFields.length < 3) {
-              this.selectedGroupFields.push(colId);
-            }
-          } else {
-            this.selectedGroupFields = this.selectedGroupFields.filter((id) => id !== colId);
-          }
-
-          this.render();
-        });
-
-        wrapper.appendChild(checkbox);
-        label.appendChild(wrapper);
-        label.appendChild(document.createTextNode(colDef.headerName || colId));
-        rowGroupSection.appendChild(label);
-      });
+      const msg = document.createElement("div");
+      msg.classList.add("msg-no-columns");
+      msg.textContent = "No groupable columns available";
+      this.eGui.appendChild(msg);
+      return;
     }
 
-    this.eGui.appendChild(rowGroupSection);
+    const groupSection = document.createElement("div");
+    groupSection.classList.add("section");
 
-    // === Aggregations Section ===
-    const aggregationSection = document.createElement('div');
-    aggregationSection.classList.add(s.section);
+    const groupTitle = document.createElement("div");
+    groupTitle.classList.add("section-title");
 
-    const aggregationTitle = document.createElement('div');
-    aggregationTitle.textContent = 'Aggregations';
-    aggregationTitle.classList.add('ag-group-title', s.sectionTitle);
-    aggregationSection.appendChild(aggregationTitle);
+    const groupIcon = document.createElement("span");
+    groupIcon.classList.add(
+      "ag-icon",
+      "ag-icon-group",
+      "ag-column-drop-icon",
+      "ag-column-drop-vertical-icon"
+    );
 
-    const aggOptions = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Gold'];
+    const groupLabel = document.createElement("span");
+    groupLabel.textContent = "Row Groups";
 
-    aggOptions.forEach((labelText) => {
-      const isChecked = this.selectedAggregations.has(labelText);
+    groupTitle.appendChild(groupIcon);
+    groupTitle.appendChild(groupLabel);
+    groupSection.appendChild(groupTitle);
 
-      const label = document.createElement('label');
-      label.classList.add('ag-label', s.checkboxLabel);
+    const groupContent = document.createElement("div");
+    groupContent.classList.add("content");
 
-      const wrapper = document.createElement('span');
-      wrapper.classList.add('ag-checkbox-input-wrapper');
+    groupableColumns.forEach((col: Column) => {
+      const colId = col.getColId();
+      const colDef = col.getColDef();
+      const isChecked = groupByFields.includes(colId);
+      const disableUnchecked = groupByFields.length >= 3 && !isChecked;
 
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
+      const label = document.createElement("label");
+      label.classList.add("label");
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
       checkbox.checked = isChecked;
-      checkbox.classList.add('ag-input-field-input', 'ag-checkbox');
+      checkbox.disabled = disableUnchecked;
 
-      checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-          this.selectedAggregations.add(labelText);
-        } else {
-          this.selectedAggregations.delete(labelText);
-        }
-
-        // You can notify external code here if needed
+      checkbox.addEventListener("change", () => {
+        const updated = isChecked
+          ? groupByFields.filter((f) => f !== colId)
+          : groupByFields.length < 3
+          ? [...groupByFields, colId]
+          : groupByFields;
+        setGroupByFields(updated);
       });
 
-      wrapper.appendChild(checkbox);
-      label.appendChild(wrapper);
-      label.appendChild(document.createTextNode(labelText));
-      aggregationSection.appendChild(label);
+      label.appendChild(checkbox);
+      label.append(document.createTextNode(" " + (colDef.headerName || colId)));
+      groupContent.appendChild(label);
     });
 
-    this.eGui.appendChild(aggregationSection);
+    groupSection.appendChild(groupContent);
+
+    this.eGui.appendChild(groupSection);
+
+    if (groupByFields.length > 0) {
+      const orderInfo = document.createElement("div");
+      orderInfo.classList.add("group-order");
+
+      const label = document.createElement("div");
+      label.classList.add("group-order-label");
+      label.textContent = "Grouping order:";
+
+      const pillContainer = document.createElement("div");
+      pillContainer.classList.add("pill-container");
+
+      groupByFields.forEach((field, index) => {
+        const pill = document.createElement("span");
+        pill.classList.add("pill");
+        pill.textContent = field;
+
+        pillContainer.appendChild(pill);
+
+        if (index < groupByFields.length - 1) {
+          const arrow = document.createElement("span");
+          arrow.classList.add("pill-arrow");
+          arrow.textContent = "→";
+          pillContainer.appendChild(arrow);
+        }
+      });
+
+      orderInfo.appendChild(label);
+      orderInfo.appendChild(pillContainer);
+      groupSection.appendChild(orderInfo);
+    }
+
+    const aggSection = document.createElement("div");
+    aggSection.classList.add("section");
+
+    const aggTitle = document.createElement("div");
+    aggTitle.classList.add("section-title");
+
+    const aggIcon = document.createElement("span");
+    aggIcon.classList.add(
+      "ag-icon",
+      "ag-icon-aggregation",
+      "ag-column-drop-icon",
+      "ag-column-drop-vertical-icon"
+    );
+
+    const aggLabelText = document.createElement("span");
+    aggLabelText.textContent = "Aggregations";
+
+    aggTitle.appendChild(aggIcon);
+    aggTitle.appendChild(aggLabelText);
+    aggSection.appendChild(aggTitle);
+
+    const aggContent = document.createElement("div");
+    aggContent.classList.add("content");
+
+    aggregations.forEach((agg) => {
+      const aggLabel = document.createElement("label");
+      aggLabel.classList.add("label");
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = activeAggregations.has(agg.id);
+
+      checkbox.addEventListener("change", () => {
+        const newSet = new Set(activeAggregations);
+        if (newSet.has(agg.id)) {
+          newSet.delete(agg.id);
+        } else {
+          newSet.add(agg.id);
+        }
+        setActiveAggregations(newSet);
+      });
+
+      aggLabel.appendChild(checkbox);
+      aggLabel.append(document.createTextNode(" " + agg.name));
+      aggContent.appendChild(aggLabel);
+    });
+
+    aggSection.appendChild(aggContent);
+    this.eGui.appendChild(aggSection);
   }
 }

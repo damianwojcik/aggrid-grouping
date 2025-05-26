@@ -1,37 +1,73 @@
 .wrapper {
-  padding: 8px;
   display: flex;
+  width: 100%;
   flex-direction: column;
-  gap: 16px;
+  font-size: 14px;
 }
 
 .section {
-  display: flex;
+  align-items: stretch;
   flex-direction: column;
+  flex-grow: 1;
+  overflow-x: auto;
+  padding: 0 8px 8px 8px;
+  position: relative;
+  &:where(:not(:last-child)) {
+    border-bottom: 1px solid rgba(24, 29, 31, 0.15);
+  }
 }
 
-.sectionTitle {
-  font-weight: bold;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: var(--ag-foreground-color, #222);
+.section-title {
+  align-items: center;
+  display: flex;
+  flex: none;
+  padding-top: 12px;
 }
 
-.checkboxLabel {
+.content {
+  padding: 12px 0;
+}
+
+.label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 4px 0;
-}
-
-.groupOrder {
-  font-size: 12px;
-  color: gray;
   margin-bottom: 8px;
+  gap: 8px;
 }
 
-.msgNoColumns {
+.msg-no-columns {
   font-style: italic;
-  font-size: 12px;
-  color: darkgray;
+  padding: 8px 0;
+}
+
+.group-order {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+// TODO: below probably will gone when use Badge / Pill component
+.group-order-label {
+  margin-bottom: 4px;
+}
+
+.pill-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill {
+  background-color: #e6f0ff;
+  color: #003366;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pill-arrow {
+  color: #666;
+  font-size: 14px;
+  margin: 0 2px;
 }
