@@ -84,15 +84,19 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
                     );
                 })}
 
-
                 <div className="group-order">
                     <strong>Grouping order:</strong>
                     <div className="pill-container">
                         {groupByFields.length > 0 ? (
-                            groupByFields.map((field) => (
-                                <span key={field} className="pill">
-                                    {field}
-                                </span>
+                            groupByFields.map((field, index) => (
+                                <>
+                                    <span key={field} className="pill">
+                                        {field}
+                                    </span>
+                                    {index < groupByFields.length - 1 && (
+                                        <span className="arrow">→</span>
+                                    )}
+                                </>
                             ))
                         ) : (
                             <span className="pill pill-empty">None</span>
