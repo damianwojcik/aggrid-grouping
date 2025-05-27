@@ -20,19 +20,19 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
   private groupByFields: string[] = [];
   private activeAggregations: Set<string> = new Set();
 
-  private defaultAggregations: AggregationItem[] = [
+  private aggregations: AggregationItem[] = [
     { id: "sizeMM", name: "Size MM", func: "sum" },
   ];
 
-init(params: IToolPanelParams): void {
-  this.api = params.api;
-  this.eGui = document.createElement("div");
+  init(params: IToolPanelParams): void {
+    this.api = params.api;
+    this.eGui = document.createElement("div");
 
-  this.api.addEventListener("gridColumnsChanged", () => this.renderReact());
-  this.api.addEventListener("columnRowGroupChanged", () => this.renderReact());
+    this.api.addEventListener("gridColumnsChanged", () => this.renderReact());
+    this.api.addEventListener("columnRowGroupChanged", () => this.renderReact());
 
-  this.renderReact(); // initial render (may be empty)
-}
+    this.renderReact(); // initial render (may be empty)
+  }
 
   getGui(): HTMLElement {
     return this.eGui;
@@ -47,37 +47,33 @@ init(params: IToolPanelParams): void {
   }
 
   private renderReact(): void {
-    const groupByFields = this.groupByFields;
     const setGroupByFields = (newState: string[]) => {
       this.groupByFields = newState;
       this.renderReact();
     };
 
-    const activeAggregations = this.activeAggregations;
     const setActiveAggregations = (newSet: Set<string>) => {
       this.activeAggregations = newSet;
       this.renderReact();
     };
 
-    const aggregations = this.defaultAggregations;
+    const allColumns = this.api.getColumns() || [];
 
-    const groupableFields = (() => {
-      const allColumns = this.api.getColumns() || [];
-      return allColumns
-        .map((col) => col.getColId())
-        .filter((id) => {
-          const colDef: any = this.api.getColumn(id)?.getColDef();
-          return colDef?.isGroupable === true;
-        });
-    })();
+    const groupableFields = allColumns
+      .map((col) => col.getColId())
+      .filter((id) => {
+        const colDef: any = this.api.getColumn(id)?.getColDef();
+        return colDef?.isGroupable === true;
+      });
+
 
     ReactDOM.render(
       <CustomGroupingPanelUI
-        groupByFields={groupByFields}
+        groupByFields={this.groupByFields}
         setGroupByFields={setGroupByFields}
-        activeAggregations={activeAggregations}
+        activeAggregations={this.activeAggregations}
         setActiveAggregations={setActiveAggregations}
-        aggregations={aggregations}
+        aggregations={this.aggregations}
         groupableFields={groupableFields}
       />,
       this.eGui
