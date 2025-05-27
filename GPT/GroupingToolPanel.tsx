@@ -23,19 +23,19 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
   private groupByFields: Group[] = [];
   private activeAggregations: Set<string> = new Set();
 
-  private aggregations: AggregationItem[] = [
-    { id: "sizeMM", name: "Size MM", func: "sum" },
-  ];
+  private aggregations: AggregationItem[] = [];
 
-  init(params: IToolPanelParams): void {
-    this.api = params.api;
-    this.eGui = document.createElement("div");
-
-    this.api.addEventListener("gridColumnsChanged", () => this.renderReact());
-    this.api.addEventListener("columnRowGroupChanged", () => this.renderReact());
-
-    this.renderReact(); // initial render (may be empty)
+init(params: IToolPanelParams): void {
+  this.api = params.api;
+  this.eGui = document.createElement("div");
+  const ctx = this.api.getContext().context;
+  if (ctx?.aggregations) {
+    this.aggregations = ctx.aggregations;
   }
+  this.api.addEventListener("gridColumnsChanged", () => this.renderReact());
+  this.api.addEventListener("columnRowGroupChanged", () => this.renderReact());
+  this.renderReact();
+}
 
   getGui(): HTMLElement {
     return this.eGui;
