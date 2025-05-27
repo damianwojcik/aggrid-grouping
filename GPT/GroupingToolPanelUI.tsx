@@ -23,11 +23,11 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
     aggregations,
     groupableFields,
 }) => {
- const groupOrderLabel = useMemo(() => {
-  return groupByFields.length > 0
-    ? groupByFields.join(" → ")
-    : "None";
-}, [groupByFields]);
+    const groupOrderLabel = useMemo(() => {
+        return groupByFields.length > 0
+            ? groupByFields.join(" → ")
+            : "None";
+    }, [groupByFields]);
 
     const handleGroupToggle = useCallback(
         (colId: string) => {
@@ -85,11 +85,20 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
                 })}
 
 
-                {groupOrderLabel && (
-                    <div className="group-order">
-                        <strong>{groupOrderLabel}</strong>
+                <div className="group-order">
+                    <strong>Grouping order:</strong>
+                    <div className="pill-container">
+                        {groupByFields.length > 0 ? (
+                            groupByFields.map((field) => (
+                                <span key={field} className="pill">
+                                    {field}
+                                </span>
+                            ))
+                        ) : (
+                            <span className="pill pill-empty">None</span>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
 
             <div className="section">
