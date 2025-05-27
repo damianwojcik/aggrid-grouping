@@ -1,7 +1,11 @@
-import { IToolPanelComp, IToolPanelParams, GridApi } from "ag-grid-community";
-import { createRoot, Root } from "react-dom/client";
+import {
+  IToolPanelComp,
+  IToolPanelParams,
+  GridApi,
+} from "ag-grid-community";
 import React from "react";
-import { CustomGroupingPanelUI } from "./CustomGroupingToolPanelUI";
+import ReactDOM from "react-dom";
+import { CustomGroupingPanelUI } from "./CustomGroupingPanelUI";
 
 interface AggregationItem {
   id: string;
@@ -11,21 +15,18 @@ interface AggregationItem {
 
 export class CustomGroupingToolPanel implements IToolPanelComp {
   private eGui!: HTMLDivElement;
-  private root!: Root;
   private api!: GridApi;
 
   private groupByFields: string[] = [];
   private activeAggregations: Set<string> = new Set();
 
-  // get from ag grid context?
-  private aggregations: AggregationItem[] = [
+  private defaultAggregations: AggregationItem[] = [
     { id: "sizeMM", name: "Size MM", func: "sum" },
   ];
 
   init(params: IToolPanelParams): void {
     this.api = params.api;
     this.eGui = document.createElement("div");
-    this.root = createRoot(this.eGui);
     this.renderReact();
   }
 
@@ -37,7 +38,12 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
     this.renderReact();
   }
 
+  destroy(): void {
+    ReactDOM.unmountComponentAtNode(this.eGui);
+  }
+
   private renderReact(): void {
+    const groupByFields = this.groupByFields;
     const setGroupByFields = (newState: string[]) => {
       this.groupByFields = newState;
       this.renderReact();
@@ -49,6 +55,8 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
       this.renderReact();
     };
 
+    const aggregations = this.defaultAggregations;
+
     const groupableFields = (() => {
       const allColumns = this.api.getColumns() || [];
       return allColumns
@@ -59,15 +67,16 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
         });
     })();
 
-    this.root.render(
+    ReactDOM.render(
       <CustomGroupingPanelUI
-        groupByFields={this.groupByFields}
+        groupByFields={groupByFields}
         setGroupByFields={setGroupByFields}
         activeAggregations={activeAggregations}
         setActiveAggregations={setActiveAggregations}
-        aggregations={this.aggregations}
+        aggregations={aggregations}
         groupableFields={groupableFields}
-      />
+      />,
+      this.eGui
     );
   }
 }
