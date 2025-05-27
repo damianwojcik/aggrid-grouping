@@ -24,11 +24,15 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
     { id: "sizeMM", name: "Size MM", func: "sum" },
   ];
 
-  init(params: IToolPanelParams): void {
-    this.api = params.api;
-    this.eGui = document.createElement("div");
-    this.renderReact();
-  }
+init(params: IToolPanelParams): void {
+  this.api = params.api;
+  this.eGui = document.createElement("div");
+
+  this.api.addEventListener("gridColumnsChanged", () => this.renderReact());
+  this.api.addEventListener("columnRowGroupChanged", () => this.renderReact());
+
+  this.renderReact(); // initial render (may be empty)
+}
 
   getGui(): HTMLElement {
     return this.eGui;
