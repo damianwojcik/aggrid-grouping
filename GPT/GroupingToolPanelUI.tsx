@@ -23,11 +23,11 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
     aggregations,
     groupableFields,
 }) => {
-    const groupOrderLabel = useMemo(() => {
-        return groupByFields.length > 0
-            ? `Grouping order: ${groupByFields.join(" → ")}`
-            : null;
-    }, [groupByFields]);
+ const groupOrderLabel = useMemo(() => {
+  return groupByFields.length > 0
+    ? groupByFields.join(" → ")
+    : "None";
+}, [groupByFields]);
 
     const handleGroupToggle = useCallback(
         (colId: string) => {
