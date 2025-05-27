@@ -60,11 +60,14 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
     const allColumns = this.api.getColumns() || [];
 
     const groupableFields = allColumns
-      .map((col) => col.getColId())
-      .filter((id) => {
-        const colDef: any = this.api.getColumn(id)?.getColDef();
+      .filter((col) => {
+        const colDef: any = col.getColDef();
         return colDef?.isGroupable === true;
-      });
+      })
+      .map((col) => ({
+        colId: col.getColId(),
+        headerName: col.getColDef().headerName || col.getColId(),
+      }));
 
 
     ReactDOM.render(
