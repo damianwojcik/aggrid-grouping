@@ -23,19 +23,13 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
     aggregations,
     groupableFields,
 }) => {
-    const groupOrderLabel = useMemo(() => {
-        return groupByFields.length > 0
-            ? groupByFields.join(" → ")
-            : "None";
-    }, [groupByFields]);
-
     const handleGroupToggle = useCallback(
-        (colId: string) => {
-            const isChecked = groupByFields.includes(colId);
+        (field: Group) => {
+            const isChecked = groupByFields.some((f) => f.colId === field.colId);
             const updated = isChecked
-                ? groupByFields.filter((f) => f !== colId)
+                ? groupByFields.filter((f) => f.colId !== field.colId)
                 : groupByFields.length < 3
-                    ? [...groupByFields, colId]
+                    ? [...groupByFields, field]
                     : groupByFields;
             setGroupByFields(updated);
         },
@@ -67,19 +61,19 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
                     <div className="msg-no-columns">No groupable columns available</div>
                 )}
 
-                {groupableFields.map(({ colId, headerName }) => {
-                    const checked = groupByFields.includes(colId);
+                {groupableFields.map((fieldObj) => {
+                    const checked = groupByFields.some((f) => f.colId === fieldObj.colId);
                     const disabled = groupByFields.length >= 3 && !checked;
 
                     return (
-                        <label key={colId} className="label">
+                        <label key={fieldObj.colId} className="label">
                             <input
                                 type="checkbox"
                                 checked={checked}
                                 disabled={disabled}
-                                onChange={() => handleGroupToggle(colId)}
+                                onChange={() => handleGroupToggle(fieldObj)}
                             />
-                            &nbsp;{headerName}
+                            &nbsp;{fieldObj.headerName}
                         </label>
                     );
                 })}
@@ -88,15 +82,13 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
                     <strong>Grouping order:</strong>
                     <div className="pill-container">
                         {groupByFields.length > 0 ? (
-                            groupByFields.map((field, index) => (
-                                <>
-                                    <span key={field} className="pill">
-                                        {field}
-                                    </span>
+                            groupByFields.map(({ colId, headerName }, index) => (
+                                <React.Fragment key={colId}>
+                                    <span className="pill">{headerName}</span>
                                     {index < groupByFields.length - 1 && (
                                         <span className="arrow">→</span>
                                     )}
-                                </>
+                                </React.Fragment>
                             ))
                         ) : (
                             <span className="pill pill-empty">None</span>

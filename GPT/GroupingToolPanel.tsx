@@ -1,6 +1,7 @@
 import {
   IToolPanelComp,
   IToolPanelParams,
+  type ColId,
   GridApi,
 } from "ag-grid-community";
 import React from "react";
@@ -13,11 +14,13 @@ interface AggregationItem {
   func: string;
 }
 
+type Group = Pick<ColId, 'colId' | 'headerName'>
+
 export class CustomGroupingToolPanel implements IToolPanelComp {
   private eGui!: HTMLDivElement;
   private api!: GridApi;
 
-  private groupByFields: string[] = [];
+  private groupByFields: Group[] = [];
   private activeAggregations: Set<string> = new Set();
 
   private aggregations: AggregationItem[] = [
@@ -47,10 +50,10 @@ export class CustomGroupingToolPanel implements IToolPanelComp {
   }
 
   private renderReact(): void {
-    const setGroupByFields = (newState: string[]) => {
-      this.groupByFields = newState;
-      this.renderReact();
-    };
+const setGroupByFields = (newState: Group[]) => {
+  this.groupByFields = newState;
+  this.renderReact();
+};
 
     const setActiveAggregations = (newSet: Set<string>) => {
       this.activeAggregations = newSet;
