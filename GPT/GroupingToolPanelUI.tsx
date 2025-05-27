@@ -61,22 +61,22 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
                     <div className="msg-no-columns">No groupable columns available</div>
                 )}
 
-                {groupableFields.map((fieldObj) => {
-                    const checked = groupByFields.some((f) => f.colId === fieldObj.colId);
-                    const disabled = groupByFields.length >= 3 && !checked;
+     {groupableFields.map((fieldObj) => {
+  const checked = groupByFields.some((f) => f.colId === fieldObj.colId);
+  const disabled = !checked && groupByFields.length >= 3;
 
-                    return (
-                        <label key={fieldObj.colId} className="label">
-                            <input
-                                type="checkbox"
-                                checked={checked}
-                                disabled={disabled}
-                                onChange={() => handleGroupToggle(fieldObj)}
-                            />
-                            &nbsp;{fieldObj.headerName}
-                        </label>
-                    );
-                })}
+  return (
+    <label key={fieldObj.colId} className="label">
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={() => handleGroupToggle(fieldObj)}
+      />
+      &nbsp;{fieldObj.headerName}
+    </label>
+  );
+})}
 
                 <div className="group-order">
                     <strong>Grouping order:</strong>
