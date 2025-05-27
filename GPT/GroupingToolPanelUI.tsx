@@ -41,7 +41,7 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
         },
         [groupByFields, setGroupByFields]
     );
-    
+
     const handleAggToggle = useCallback(
         (id: string) => {
             const updated = new Set(activeAggregations);
@@ -67,22 +67,23 @@ export const CustomGroupingPanelUI: React.FC<Props> = ({
                     <div className="msg-no-columns">No groupable columns available</div>
                 )}
 
-                {groupableFields.map((field) => {
-                    const checked = groupByFields.includes(field);
+                {groupableFields.map(({ colId, headerName }) => {
+                    const checked = groupByFields.includes(colId);
                     const disabled = groupByFields.length >= 3 && !checked;
 
                     return (
-                        <label key={field} className="label">
+                        <label key={colId} className="label">
                             <input
                                 type="checkbox"
                                 checked={checked}
                                 disabled={disabled}
-                                onChange={() => handleGroupToggle(field)}
+                                onChange={() => handleGroupToggle(colId)}
                             />
-                            &nbsp;{field}
+                            &nbsp;{headerName}
                         </label>
                     );
                 })}
+
 
                 {groupOrderLabel && (
                     <div className="group-order">
