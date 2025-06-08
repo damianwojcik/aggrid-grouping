@@ -1,17 +1,26 @@
 
 
 
-const calculateSpreadForCurves = (
-  rate0Str?: string,
-  rate1Str?: string,
-  spreadStr?: string,
-  maturity0?: number,
-  maturity1?: number
-): Partial<{ rate0: number; rate1: number; spread: number }> => {
-  const rate0 = rate0Str ? new BigNumber(rate0Str) : undefined;
-  const rate1 = rate1Str ? new BigNumber(rate1Str) : undefined;
-  const spread = spreadStr ? new BigNumber(spreadStr) : undefined;
-  if (maturity0 == null || maturity1 == null) return {};
+const calculateSpreadForCurve = (
+  ticket: Ticket,
+  quoteType: string,
+  spreadInput: number | null | undefined
+): Partial<{ rate0: number; rate1: number; spread: number }> | null => {
+  const legs = ticket?.legs;
+
+  const maturity0 = legs?.[0]?.product?.expiryDate ? new Date(legs[0].product.expiryDate) : undefined;
+  const maturity1 = legs?.[1]?.product?.expiryDate ? new Date(legs[1].product.expiryDate) : undefined;
+
+  if (!maturity0 || !maturity1) return null;
+
+  const rate0Raw = legs?.[0] ? getSwapRateForLeg(legs[0]) : undefined;
+  const rate1Raw = legs?.[1] ? getSwapRateForLeg(legs[1]) : undefined;
+  const spreadRaw = spreadInput ?? getSpread(ticket, quoteType);
+
+  const rate0 = rate0Raw != null ? new BigNumber(rate0Raw) : undefined;
+  const rate1 = rate1Raw != null ? new BigNumber(rate1Raw) : undefined;
+  const spread = spreadRaw != null ? new BigNumber(spreadRaw) : undefined;
+
   const rate0Later = maturity0 >= maturity1; // always prefer second if equal
   const [a, b] = rate0Later ? [rate0, rate1] : [rate1, rate0];
 
