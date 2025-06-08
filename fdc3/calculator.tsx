@@ -1,54 +1,58 @@
 
-const parseNumber = (value: string): BigNumber | undefined => {
-    const parsed = new BigNumber(value);
-    return parsed.isFinite() ? parsed : undefined;
-};
+
 
 const calculateSpreadForCurves = (
-    rate0?: BigNumber,
-    rate1?: BigNumber,
-    spread?: BigNumber,
-    maturity0?: number,
-    maturity1?: number
+  rate0Str?: string,
+  rate1Str?: string,
+  spreadStr?: string,
+  maturity0?: number,
+  maturity1?: number
 ): Partial<{ rate0: number; rate1: number; spread: number }> => {
-    if (maturity0 == null || maturity1 == null) return {};
-    const rate0Later = maturity0 >= maturity1; // always prefer second if equal
-    const [a, b] = rate0Later ? [rate0, rate1] : [rate1, rate0];
+  const rate0 = rate0Str ? new BigNumber(rate0Str) : undefined;
+  const rate1 = rate1Str ? new BigNumber(rate1Str) : undefined;
+  const spread = spreadStr ? new BigNumber(spreadStr) : undefined;
+  if (maturity0 == null || maturity1 == null) return {};
+  const rate0Later = maturity0 >= maturity1; // always prefer second if equal
+  const [a, b] = rate0Later ? [rate0, rate1] : [rate1, rate0];
 
-    if (!a || !b) {
-        if (spread && b) {
-            const result = b.plus(spread.dividedBy(100));
-            return rate0Later ? { rate0: result.toNumber() } : { rate1: result.toNumber() };
-        }
-        if (spread && a) {
-            const result = a.minus(spread.dividedBy(100));
-            return rate0Later ? { rate1: result.toNumber() } : { rate0: result.toNumber() };
-        }
-    } else if (!spread) {
-        return { spread: a.minus(b).times(100).toNumber() };
+  if (!a || !b) {
+    if (spread && b) {
+      const result = b.plus(spread.dividedBy(100));
+      return rate0Later ? { rate0: result.toNumber() } : { rate1: result.toNumber() };
     }
-    return {};
+    if (spread && a) {
+      const result = a.minus(spread.dividedBy(100));
+      return rate0Later ? { rate1: result.toNumber() } : { rate0: result.toNumber() };
+    }
+  } else if (!spread) {
+    return { spread: a.minus(b).times(100).toNumber() };
+  }
+  return {};
 };
 
 const calculateSpreadForFly = (
-    rate0?: BigNumber,
-    rate1?: BigNumber,
-    rate2?: BigNumber,
-    spread?: BigNumber
+  rate0Str?: string,
+  rate1Str?: string,
+  rate2Str?: string,
+  spreadStr?: string
 ): Partial<{ rate0: number; rate1: number; rate2: number; spread: number }> => {
-    if (!spread && rate0 && rate1 && rate2) {
-        return { spread: rate1.times(2).minus(rate0).minus(rate2).times(100).toNumber() };
-    }
-    if (!rate1 && rate0 && rate2 && spread) {
-        return { rate1: rate0.plus(rate2).plus(spread.dividedBy(100)).dividedBy(2).toNumber() };
-    }
-    if (!rate0 && rate1 && rate2 && spread) {
-        return { rate0: rate1.times(2).minus(rate2).minus(spread.dividedBy(100)).toNumber() };
-    }
-    if (!rate2 && rate0 && rate1 && spread) {
-        return { rate2: rate1.times(2).minus(rate0).minus(spread.dividedBy(100)).toNumber() };
-    }
-    return {};
+  const rate0 = rate0Str ? new BigNumber(rate0Str) : undefined;
+  const rate1 = rate1Str ? new BigNumber(rate1Str) : undefined;
+  const rate2 = rate2Str ? new BigNumber(rate2Str) : undefined;
+  const spread = spreadStr ? new BigNumber(spreadStr) : undefined;
+  if (!spread && rate0 && rate1 && rate2) {
+    return { spread: rate1.times(2).minus(rate0).minus(rate2).times(100).toNumber() };
+  }
+  if (!rate1 && rate0 && rate2 && spread) {
+    return { rate1: rate0.plus(rate2).plus(spread.dividedBy(100)).dividedBy(2).toNumber() };
+  }
+  if (!rate0 && rate1 && rate2 && spread) {
+    return { rate0: rate1.times(2).minus(rate2).minus(spread.dividedBy(100)).toNumber() };
+  }
+  if (!rate2 && rate0 && rate1 && spread) {
+    return { rate2: rate1.times(2).minus(rate0).minus(spread.dividedBy(100)).toNumber() };
+  }
+  return {};
 };
 
 export default function App() {
