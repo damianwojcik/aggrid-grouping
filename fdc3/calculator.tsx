@@ -36,25 +36,35 @@ const calculateSpreadForCurve = (
   const [a, b] = rate0Later ? [rate0, rate1] : [rate1, rate0];
 
   if (!a || !b) {
-    console.log('Missing a or b, trying to compute from spread and known value');
     if (spread && b) {
       const result = b.plus(spread.dividedBy(100));
-      const computed = rate0Later ? { rate0: result.toNumber() } : { rate1: result.toNumber() };
-      console.log('Computed result from spread and b:', computed);
-      return computed;
+      return {
+        rate0: rate0Later ? result.toNumber() : rate0?.toNumber(),
+        rate1: !rate0Later ? result.toNumber() : rate1?.toNumber(),
+        spread: spread.toNumber()
+      };
     }
     if (spread && a) {
       const result = a.minus(spread.dividedBy(100));
-      const computed = rate0Later ? { rate1: result.toNumber() } : { rate0: result.toNumber() };
-      console.log('Computed result from spread and a:', computed);
-      return computed;
+      return {
+        rate0: !rate0Later ? result.toNumber() : rate0?.toNumber(),
+        rate1: rate0Later ? result.toNumber() : rate1?.toNumber(),
+        spread: spread.toNumber()
+      };
     }
   } else if (!spread) {
-    const computed = { spread: a.minus(b).times(100).toNumber() };
-    console.log('Computed spread:', computed);
-    return computed;
+    const computedSpread = a.minus(b).times(100).toNumber();
+    return {
+      rate0: rate0.toNumber(),
+      rate1: rate1.toNumber(),
+      spread: computedSpread
+    };
   }
-  return {};
+  return {
+    rate0: rate0?.toNumber(),
+    rate1: rate1?.toNumber(),
+    spread: spread?.toNumber()
+  };
 };
 
 const calculateSpreadForFly = (
