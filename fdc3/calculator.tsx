@@ -6,35 +6,53 @@ const calculateSpreadForCurve = (
   quoteType: string,
   spreadInput: number | null | undefined
 ): Partial<{ rate0: number; rate1: number; spread: number }> | null => {
+  console.log('Running calculateSpreadForCurve');
   const legs = ticket?.legs;
+  console.log('legs:', legs);
 
   const maturity0 = legs?.[0]?.product?.expiryDate ? new Date(legs[0].product.expiryDate) : undefined;
   const maturity1 = legs?.[1]?.product?.expiryDate ? new Date(legs[1].product.expiryDate) : undefined;
+  console.log('maturities:', { maturity0, maturity1 });
 
   if (!maturity0 || !maturity1) return null;
 
   const rate0Raw = legs?.[0] ? getSwapRateForLeg(legs[0]) : undefined;
   const rate1Raw = legs?.[1] ? getSwapRateForLeg(legs[1]) : undefined;
   const spreadRaw = spreadInput ?? getSpread(ticket, quoteType);
+  console.log('raw values:', { rate0Raw, rate1Raw, spreadRaw });
 
   const rate0 = rate0Raw != null ? new BigNumber(rate0Raw) : undefined;
   const rate1 = rate1Raw != null ? new BigNumber(rate1Raw) : undefined;
   const spread = spreadRaw != null ? new BigNumber(spreadRaw) : undefined;
 
+  const rate0Later = maturity0 >= maturity1;
+  const [a, b] = rate0Later ? [rate0, rate1] : [rate1, rate0];
+  console.log('using values:', { a: a?.toString(), b: b?.toString(), spread: spread?.toString() });
+  const rate0 = rate0Str ? new BigNumber(rate0Str) : undefined;
+  const rate1 = rate1Str ? new BigNumber(rate1Str) : undefined;
+  const spread = spreadStr ? new BigNumber(spreadStr) : undefined;
+  if (maturity0 == null || maturity1 == null) return {};
   const rate0Later = maturity0 >= maturity1; // always prefer second if equal
   const [a, b] = rate0Later ? [rate0, rate1] : [rate1, rate0];
 
   if (!a || !b) {
+    console.log('Missing a or b, trying to compute from spread and known value');
     if (spread && b) {
       const result = b.plus(spread.dividedBy(100));
-      return rate0Later ? { rate0: result.toNumber() } : { rate1: result.toNumber() };
+      const computed = rate0Later ? { rate0: result.toNumber() } : { rate1: result.toNumber() };
+      console.log('Computed result from spread and b:', computed);
+      return computed;
     }
     if (spread && a) {
       const result = a.minus(spread.dividedBy(100));
-      return rate0Later ? { rate1: result.toNumber() } : { rate0: result.toNumber() };
+      const computed = rate0Later ? { rate1: result.toNumber() } : { rate0: result.toNumber() };
+      console.log('Computed result from spread and a:', computed);
+      return computed;
     }
   } else if (!spread) {
-    return { spread: a.minus(b).times(100).toNumber() };
+    const computed = { spread: a.minus(b).times(100).toNumber() };
+    console.log('Computed spread:', computed);
+    return computed;
   }
   return {};
 };
