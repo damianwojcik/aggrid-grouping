@@ -65,6 +65,27 @@ const calculateSpreadForCurve = (
     };
   }
 
+  //
+
+  if (path.includes('spread')) {
+    const result = rate0Later
+      ? rate1!.plus(spreadValue!.dividedBy(100))
+      : rate0!.plus(spreadValue!.dividedBy(100));
+    console.log('[spread updated - recompute rate]', {
+      updated: path,
+      a: a!.toNumber(),
+      b: b!.toNumber(),
+      result: result.toNumber()
+    });
+    return {
+      rate0: rate0Later ? rate0!.toNumber() : result.toNumber(),
+      rate1: rate0Later ? result.toNumber() : rate1!.toNumber(),
+      spread: spreadValue!.toNumber()
+    };
+  }
+
+  //
+
   console.log('[all present]', {
     rate0: rate0?.toNumber(),
     rate1: rate1?.toNumber(),
