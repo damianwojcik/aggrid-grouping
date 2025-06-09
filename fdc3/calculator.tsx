@@ -67,19 +67,18 @@ const calculateSpreadForCurve = (
 
   //
 
+
   if (path.includes('spread')) {
-    const result = rate0Later
-      ? rate1!.plus(spreadValue!.dividedBy(100))
-      : rate0!.plus(spreadValue!.dividedBy(100));
-    console.log('[spread updated - recompute rate]', {
+    const result = a!.minus(spreadValue!.dividedBy(100));
+    console.log('[spread updated - update later rate]', {
       updated: path,
       a: a!.toNumber(),
-      b: b!.toNumber(),
-      result: result.toNumber()
+      spread: spreadValue!.toNumber(),
+      newRate: result.toNumber()
     });
     return {
-      rate0: rate0Later ? rate0!.toNumber() : result.toNumber(),
-      rate1: rate0Later ? result.toNumber() : rate1!.toNumber(),
+      rate0: rate0Later ? result.toNumber() : rate0!.toNumber(),
+      rate1: rate0Later ? rate1!.toNumber() : result.toNumber(),
       spread: spreadValue!.toNumber()
     };
   }
