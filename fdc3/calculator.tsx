@@ -6,9 +6,11 @@ const calculateSpreadForCurve = (
   const { path, value } = update;
   const legs = ticket?.legs;
   const spread = ticket?.spread;
-
-  const maturity0 = legs?.[0]?.product?.expiryDate ? new Date(legs[0].product.expiryDate) : undefined;
-  const maturity1 = legs?.[1]?.product?.expiryDate ? new Date(legs[1].product.expiryDate) : undefined;
+  
+  const maturity0Raw = path === 'legs.0.maturityDate' ? value : legs?.[0]?.product?.expiryDate;
+  const maturity1Raw = path === 'legs.1.maturityDate' ? value : legs?.[1]?.product?.expiryDate;
+  const maturity0 = maturity0Raw ? new Date(maturity0Raw) : undefined;
+  const maturity1 = maturity1Raw ? new Date(maturity1Raw) : undefined;
   if (!maturity0 || !maturity1) return {};
 
   const rate0Later = maturity0 >= maturity1;
