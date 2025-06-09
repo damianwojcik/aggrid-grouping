@@ -76,6 +76,16 @@ const calculateSpreadForCurve = (
     };
   }
 
+  if ((path.includes('rate') || hasAll) && a && b && spreadValue) {
+  const computedSpread = a.minus(b).times(100).toNumber();
+  console.log('[recompute spread when all present or rate updated]', { a: a.toNumber(), b: b.toNumber(), computedSpread });
+  return {
+    rate0: rate0?.toNumber(),
+    rate1: rate1?.toNumber(),
+    spread: computedSpread
+  };
+}
+
   if (path.includes('spread') || hasAll) {
     const result = a!.minus(spreadValue!.dividedBy(100));
     console.log('[recalculate later rate due to spread change or all present]', {
