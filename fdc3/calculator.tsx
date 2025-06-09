@@ -88,7 +88,9 @@ const calculateSpreadForCurve = (
       rate1: rate0Later ? rate1!.toNumber() : result.toNumber(),
       spread: spreadValue!.toNumber()
     };
-  } 
+  }
+
+  return {};
 };
 
 export default function App() {
