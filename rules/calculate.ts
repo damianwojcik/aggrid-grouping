@@ -32,6 +32,19 @@ export const calculateSpreadForCurve = (
   const rate1 = rate1Raw != null ? new BigNumber(rate1Raw) : undefined;
   const spreadValue = spreadRaw != null ? new BigNumber(spreadRaw) : undefined;
 
+  //
+
+const updatedField =
+  path === "legs.0.rate" ? "rate0" :
+  path === "legs.1.rate" ? "rate1" :
+  path === "spread" || path.includes("spread.") ? "spread" :
+  null;
+
+if (updatedField === "rate0" && rate0 !== undefined) return {};
+if (updatedField === "rate1" && rate1 !== undefined) return {};
+if (updatedField === "spread" && spreadValue !== undefined) return {};
+  //
+
   const a = rate0Later ? rate0 : rate1;
   const b = rate0Later ? rate1 : rate0;
 

@@ -7,8 +7,9 @@ const handleConvert = (
   if (!update?.value) return;
 
   const shouldRecalculate =
-    update.path.includes("maturityDate") ||
-    (update.path.includes("spread") && update.applyToTarget);
+   update.path.includes("maturityDate") ||
+  update.path.includes("rate") ||
+  (update.path.includes("spread") && update.applyToTarget);
 
   if (shouldRecalculate) {
     return calculateSpreadForCurve(context, update);
