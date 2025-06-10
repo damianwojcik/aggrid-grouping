@@ -1,5 +1,10 @@
 import BigNumber from "bignumber.js";
 
+const parseFloatSafe = (v: any): number | undefined => {
+  const n = parseFloat(v);
+  return isNaN(n) ? undefined : n;
+};
+
 export const calculateSpreadForCurve = (
     ticket: Ticket,
     update?: { path: string; value: number | string }
@@ -28,9 +33,9 @@ export const calculateSpreadForCurve = (
             ? value
             : spread?.ask ?? spread?.bid;
 
-    const rate0 = rate0Raw != null ? new BigNumber(rate0Raw) : undefined;
-    const rate1 = rate1Raw != null ? new BigNumber(rate1Raw) : undefined;
-    const spreadValue = spreadRaw != null ? new BigNumber(spreadRaw) : undefined;
+    const rate0 = rate0Raw != null ? new BigNumber(parseFloatSafe(rate0Raw)) : undefined;
+    const rate1 = rate1Raw != null ? new BigNumber(parseFloatSafe(rate1Raw)) : undefined;
+    const spreadValue = spreadRaw != null ? new BigNumber(parseFloatSafe(spreadRaw)) : undefined;
 
     const a = rate0Later ? rate0 : rate1;
     const b = rate0Later ? rate1 : rate0;
@@ -39,27 +44,26 @@ export const calculateSpreadForCurve = (
     // if (!hasAll && !isNew) return {};
 
     return {
-  rate0: rate0?.toNumber() ?? (
-    rate0Later && !rate0 && spreadValue && rate1
-      ? rate1.plus(spreadValue.dividedBy(100)).toNumber()
-      : !rate0Later && !rate0 && rate1 && spreadValue
-      ? rate1.minus(spreadValue.dividedBy(100)).toNumber()
-      : undefined
-  ),
-  rate1: rate1?.toNumber() ?? (
-    !rate0Later && !rate1 && rate0 && spreadValue
-      ? rate0.plus(spreadValue.dividedBy(100)).toNumber()
-      : rate0Later && !rate1 && rate0 && spreadValue
-      ? rate0.minus(spreadValue.dividedBy(100)).toNumber()
-      : undefined
-  ),
-  spread: spreadValue?.toNumber() ?? (
-    rate0 && rate1
-      ? rate0Later
-        ? rate0.minus(rate1).times(100).toNumber()
-        : rate1.minus(rate0).times(100).toNumber()
-      : undefined
-  )
-};
-
+        rate0: rate0?.toNumber() ?? (
+            rate0Later && !rate0 && spreadValue && rate1
+                ? rate1.plus(spreadValue.dividedBy(100)).toNumber()
+                : !rate0Later && !rate0 && rate1 && spreadValue
+                    ? rate1.minus(spreadValue.dividedBy(100)).toNumber()
+                    : undefined
+        ),
+        rate1: rate1?.toNumber() ?? (
+            !rate0Later && !rate1 && rate0 && spreadValue
+                ? rate0.plus(spreadValue.dividedBy(100)).toNumber()
+                : rate0Later && !rate1 && rate0 && spreadValue
+                    ? rate0.minus(spreadValue.dividedBy(100)).toNumber()
+                    : undefined
+        ),
+        spread: spreadValue?.toNumber() ?? (
+            rate0 && rate1
+                ? rate0Later
+                    ? rate0.minus(rate1).times(100).toNumber()
+                    : rate1.minus(rate0).times(100).toNumber()
+                : undefined
+        )
+    };
 };
