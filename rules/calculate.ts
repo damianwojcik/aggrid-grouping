@@ -35,11 +35,12 @@ export const calculateSpreadForCurve = (
   //
 
 const updatedField =
-  path === "legs.0.rate" ? "rate0" :
-  path === "legs.1.rate" ? "rate1" :
-  path === "spread" || path.includes("spread.") ? "spread" :
+  path.includes("legs.0.rate") ? "rate0" :
+  path.includes("legs.1.rate") ? "rate1" :
+ path.includes("spread") ? "spread" :
   null;
 
+// Don't override manually edited value
 if (updatedField === "rate0" && rate0 !== undefined) return {};
 if (updatedField === "rate1" && rate1 !== undefined) return {};
 if (updatedField === "spread" && spreadValue !== undefined) return {};
