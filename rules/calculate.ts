@@ -32,56 +32,34 @@ export const calculateSpreadForCurve = (
     const rate1 = rate1Raw != null ? new BigNumber(rate1Raw) : undefined;
     const spreadValue = spreadRaw != null ? new BigNumber(spreadRaw) : undefined;
 
-    //
-
-    const updatedField =
-        path.includes("legs.0.rate") ? "rate0" :
-            path.includes("legs.1.rate") ? "rate1" :
-                path.includes("spread") ? "spread" :
-                    null;
-
-    // Don't override manually edited value
-    if (updatedField === "rate0" && rate0 !== undefined) return {};
-    if (updatedField === "rate1" && rate1 !== undefined) return {};
-    if (updatedField === "spread" && spreadValue !== undefined) return {};
-    //
-
     const a = rate0Later ? rate0 : rate1;
     const b = rate0Later ? rate1 : rate0;
 
     const hasAll = a && b && spreadValue;
-    if (!hasAll && !isNew) return {};
+    // if (!hasAll && !isNew) return {};
 
-    if (!a && spreadValue && b) {
-        const result = b.plus(spreadValue.dividedBy(100));
-        return rate0Later
-            ? { rate0: result.toNumber() }
-            : { rate1: result.toNumber() };
-    }
+    return {
+  rate0: rate0?.toNumber() ?? (
+    rate0Later && !rate0 && spreadValue && rate1
+      ? rate1.plus(spreadValue.dividedBy(100)).toNumber()
+      : !rate0Later && !rate0 && rate1 && spreadValue
+      ? rate1.minus(spreadValue.dividedBy(100)).toNumber()
+      : undefined
+  ),
+  rate1: rate1?.toNumber() ?? (
+    !rate0Later && !rate1 && rate0 && spreadValue
+      ? rate0.plus(spreadValue.dividedBy(100)).toNumber()
+      : rate0Later && !rate1 && rate0 && spreadValue
+      ? rate0.minus(spreadValue.dividedBy(100)).toNumber()
+      : undefined
+  ),
+  spread: spreadValue?.toNumber() ?? (
+    rate0 && rate1
+      ? rate0Later
+        ? rate0.minus(rate1).times(100).toNumber()
+        : rate1.minus(rate0).times(100).toNumber()
+      : undefined
+  )
+};
 
-    if (!b && spreadValue && a) {
-        const result = a.minus(spreadValue.dividedBy(100));
-        return rate0Later
-            ? { rate1: result.toNumber() }
-            : { rate0: result.toNumber() };
-    }
-
-    if (!spreadValue && a && b) {
-        const computedSpread = a.minus(b).times(100).toNumber();
-        return { spread: computedSpread };
-    }
-
-    if ((path.includes("rate") || hasAll) && a && b && spreadValue) {
-        const computedSpread = a.minus(b).times(100).toNumber();
-        return { spread: computedSpread };
-    }
-
-    if ((path.includes("spread") || hasAll) && spreadValue && b) {
-        const result = b.plus(spreadValue.dividedBy(100));
-        return rate0Later
-            ? { rate0: result.toNumber() }
-            : { rate1: result.toNumber() };
-    }
-
-    return {};
 };
