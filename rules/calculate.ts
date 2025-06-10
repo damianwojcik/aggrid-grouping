@@ -1,69 +1,68 @@
-import BigNumber from "bignumber.js";
-
-const parseFloatSafe = (v: any): number | undefined => {
-  const n = parseFloat(v);
-  return isNaN(n) ? undefined : n;
-};
-
 export const calculateSpreadForCurve = (
-    ticket: Ticket,
-    update?: { path: string; value: number | string }
-): Partial<{ rate0: number; rate1: number; spread: number }> | null => {
-    const isNew = ticket?.isNew === true;
-    const path = update?.path ?? "";
-    const value = update?.value;
-    const legs = ticket?.legs;
-    const spread = ticket?.spread;
+  ticket: Ticket,
+  update?: { path: string; value: number | string }
+): Partial<{ rate0: number; rate1: number; spread: number }> => {
+  const legs = ticket.legs;
+  const spread = ticket.spread;
 
-    if (!ticket?.legs?.[0] || !ticket.legs[1]) return {};
+  if (!legs?.[0] || !legs?.[1]) return {};
 
-    const maturity0Raw = path === "legs.0.maturityDate" ? value : legs[0]?.product?.expiryDate;
-    const maturity1Raw = path === "legs.1.maturityDate" ? value : legs[1]?.product?.expiryDate;
+  const updatePath = update?.path || "";
+  const updateValue = update?.value;
 
-    const maturity0 = maturity0Raw ? new Date(maturity0Raw) : undefined;
-    const maturity1 = maturity1Raw ? new Date(maturity1Raw) : undefined;
-    if (!maturity0 || !maturity1) return {};
+  const maturity0 = updatePath === "legs.0.maturityDate" ? new Date(updateValue) : new Date(legs[0].product.expiryDate);
+  const maturity1 = updatePath === "legs.1.maturityDate" ? new Date(updateValue) : new Date(legs[1].product.expiryDate);
 
-    const rate0Later = maturity0 >= maturity1;
+  if (!maturity0 || !maturity1) return {};
 
-    const rate0Raw = path.includes("legs.0.rate") ? value : legs[0]?.rate;
-    const rate1Raw = path.includes("legs.1.rate") ? value : legs[1]?.rate;
-    const spreadRaw =
-        path.includes("spread.ask") || path.includes("spread.bid") || path === "spread"
-            ? value
-            : spread?.ask ?? spread?.bid;
+  const rate0Later = maturity0 >= maturity1;
 
-    const rate0 = rate0Raw != null ? new BigNumber(parseFloatSafe(rate0Raw)) : undefined;
-    const rate1 = rate1Raw != null ? new BigNumber(parseFloatSafe(rate1Raw)) : undefined;
-    const spreadValue = spreadRaw != null ? new BigNumber(parseFloatSafe(spreadRaw)) : undefined;
+  const side0 = legs[0].side ?? Side.clientBuy;
+  const side1 = legs[1].side ?? Side.clientBuy;
 
-    const a = rate0Later ? rate0 : rate1;
-    const b = rate0Later ? rate1 : rate0;
+  const rate0 = updatePath.startsWith("legs.0.rate")
+    ? new BigNumber(updateValue)
+    : legs[0].rate?.[side0] !== undefined
+      ? new BigNumber(legs[0].rate[side0])
+      : undefined;
 
-    const hasAll = a && b && spreadValue;
-    // if (!hasAll && !isNew) return {};
+  const rate1 = updatePath.startsWith("legs.1.rate")
+    ? new BigNumber(updateValue)
+    : legs[1].rate?.[side1] !== undefined
+      ? new BigNumber(legs[1].rate[side1])
+      : undefined;
 
-    return {
-        rate0: rate0?.toNumber() ?? (
-            rate0Later && !rate0 && spreadValue && rate1
-                ? rate1.plus(spreadValue.dividedBy(100)).toNumber()
-                : !rate0Later && !rate0 && rate1 && spreadValue
-                    ? rate1.minus(spreadValue.dividedBy(100)).toNumber()
-                    : undefined
-        ),
-        rate1: rate1?.toNumber() ?? (
-            !rate0Later && !rate1 && rate0 && spreadValue
-                ? rate0.plus(spreadValue.dividedBy(100)).toNumber()
-                : rate0Later && !rate1 && rate0 && spreadValue
-                    ? rate0.minus(spreadValue.dividedBy(100)).toNumber()
-                    : undefined
-        ),
-        spread: spreadValue?.toNumber() ?? (
-            rate0 && rate1
-                ? rate0Later
-                    ? rate0.minus(rate1).times(100).toNumber()
-                    : rate1.minus(rate0).times(100).toNumber()
-                : undefined
-        )
-    };
+  const spreadValue = updatePath.startsWith("spread")
+    ? new BigNumber(updateValue)
+    : spread?.bid !== undefined
+      ? new BigNumber(spread.bid)
+      : spread?.ask !== undefined
+        ? new BigNumber(spread.ask)
+        : undefined;
+
+  const result: Partial<{ rate0: number; rate1: number; spread: number }> = {};
+
+  if (rate0 !== undefined && rate1 !== undefined) {
+    result.spread = rate0Later
+      ? rate0.minus(rate1).times(100).toNumber()
+      : rate1.minus(rate0).times(100).toNumber();
+  }
+
+  if (spreadValue !== undefined) {
+    if (rate0Later && rate1 !== undefined && updatePath.startsWith("spread")) {
+      result.rate0 = rate1.plus(spreadValue.dividedBy(100)).toNumber();
+    } else if (!rate0Later && rate0 !== undefined && updatePath.startsWith("spread")) {
+      result.rate1 = rate0.plus(spreadValue.dividedBy(100)).toNumber();
+    }
+  }
+
+  if (rate0 !== undefined && updatePath.startsWith("legs.0.rate")) {
+    result.rate0 = rate0.toNumber();
+  }
+
+  if (rate1 !== undefined && updatePath.startsWith("legs.1.rate")) {
+    result.rate1 = rate1.toNumber();
+  }
+
+  return result;
 };
