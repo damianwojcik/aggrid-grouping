@@ -1,50 +1,44 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+const ColumnsToolPanel = ColumnToolPanelModule.userComponents?.find(
+  (component) => component.name === 'agColumnsToolPanel'
+)?.classImp as new (...args: any[]) => IToolPanelComp & { eGui?: HTMLElement };
 
-const TerminalConnectContext = createContext(null);
+const createCustomToolPanel = () => {
+  return class CustomToolPanel extends ColumnsToolPanel {
+    constructor() {
+      super();
+    }
 
-export const TerminalConnectContextProvider = ({ children }) => {
-  const { machineName } = useStorageContext();
-  const [tcClient, setTcClient] = useState<TerminalConnectWebClient | undefined>(undefined);
-  const [groups, setGroups] = useState<any>(undefined); // Replace with your groups type
+    // Override this method if possible (it may vary depending on AG Grid version)
+    // This is a rough sketch; you may need to adjust based on your AG Grid version
+    createColumnItem(column: any) {
+      // Call base implementation for other columns
+      if (column.colDef && column.colDef.field === 'bbgActions') {
+        // Create your custom element
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
 
-  useEffect(() => {
-    const options = machineName
-      ? { endpoints: { terminal: { hostname: createURL(machineName), port: 1444 } } }
-      : undefined;
+        // Text
+        const text = document.createElement('span');
+        text.innerText = column.colDef.headerName || column.colDef.field;
+        container.appendChild(text);
 
-    const client = new TerminalConnectWebClient(API_KEY ?? '', options);
+        // Clickable icon
+        const icon = document.createElement('span');
+        icon.innerHTML = '🔗'; // Replace with your preferred icon (SVG, etc)
+        icon.style.cursor = 'pointer';
+        icon.style.marginLeft = '8px';
+        icon.onclick = () => {
+          // Your custom logic here
+          alert('Icon clicked for bbgActions!');
+        };
+        container.appendChild(icon);
 
-    setTcClient(client);
-
-    const abortController = new AbortController();
-
-    const fetchGroups = async () => {
-      const data = await useGroups(client, { signal: abortController.signal });
-      if (!abortController.signal.aborted) {
-        setGroups(data);
+        return container;
+      } else {
+        // Fallback to default behavior
+        return super.createColumnItem(column);
       }
-    };
-
-    fetchGroups();
-
-    return () => {
-      abortController.abort();
-      client?.disconnect?.();
-      setGroups(undefined);
-      setTcClient(undefined);
-    };
-  }, [machineName]);
-
-  const contextValue = useMemo(() => ({
-    tcClient,
-    groups,
-  }), [tcClient, groups]);
-
-  return (
-    <TerminalConnectContext.Provider value={contextValue}>
-      {children}
-    </TerminalConnectContext.Provider>
-  );
+    }
+  };
 };
-
-export const useTerminalConnectContext = () => useContext(TerminalConnectContext);
