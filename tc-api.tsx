@@ -1,40 +1,42 @@
+import React from "react";
+import ReactDOM from "react-dom";
+
+const ColumnsToolPanel = ColumnToolPanelModule.userComponents?.find(
+  (component) => component.name === "agColumnsToolPanel"
+)?.classImp as new (...args: any[]) => IToolPanelComp & { eGui?: HTMLElement };
+
 const createCustomToolPanel = () => {
   return class CustomToolPanel extends ColumnsToolPanel {
-    constructor() {
-      super();
+    constructor(...args: any[]) {
+      super(...args);
+      this.injectReactComponent();
     }
 
-    init(params: any) {
-      super.init(params);
-      setTimeout(() => this.injectCustomRenderer(), 0);
-
-      // Optional: Observe for re-renders
-      // const panel = this.eGui?.querySelector('.ag-column-select-panel');
-      // if (panel) {
-      //   const observer = new MutationObserver(() => this.injectCustomRenderer());
-      //   observer.observe(panel, { childList: true, subtree: true });
-      // }
+    // This will be called by AG Grid whenever the Tool Panel needs to refresh
+    refresh() {
+      super.refresh?.(); // Call base class refresh just in case
+      this.injectReactComponent();
+      return true; // AG Grid expects a boolean
     }
 
-injectCustomRenderer() {
-  const labels = this.eGui?.querySelectorAll('.ag-column-select-label');
-  if (!labels) return;
+    injectReactComponent() {
+      const labels = this.eGui?.querySelectorAll(".ag-column-select-label");
+      if (!labels) return;
 
-  // Convert NodeList to Array and find the one with matching text
-  const label = Array.from(labels).find(
-    el => el.textContent?.trim() === 'bbgActions' && !el.querySelector('.my-custom-action')
-  );
-  if (label) {
-    ReactDOM.render(
-      <span className="my-custom-action">
-        Text&nbsp;
-        <span style={{ cursor: 'pointer' }} onClick={() => alert('Clicked!')}>🔗</span>
-      </span>,
-      label as Element
-    );
-  }
-}
-
-
+      for (const label of labels) {
+        if (label.textContent?.includes("bbgActions")) {
+          // Clean up previous renders to avoid duplicate React trees
+          ReactDOM.unmountComponentAtNode(label as Element);
+          label.textContent = ""; // Or keep the text if you want
+          ReactDOM.render(
+            <span className="my-custom-action">
+              Text <span style={{ cursor: "pointer" }} onClick={() => alert("Clicked!")}>🔗</span>
+            </span>,
+            label as Element
+          );
+          break;
+        }
+      }
+    }
   };
 };
