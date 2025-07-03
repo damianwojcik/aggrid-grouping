@@ -7,16 +7,20 @@ const ColumnsToolPanel = ColumnToolPanelModule.userComponents?.find(
 
 const createCustomToolPanel = () => {
   return class CustomToolPanel extends ColumnsToolPanel {
+    private observer: MutationObserver | null = null;
+
     constructor(...args: any[]) {
       super(...args);
+      this.setupObserver();
       this.injectReactComponent();
     }
 
-    // This will be called by AG Grid whenever the Tool Panel needs to refresh
-    refresh() {
-      super.refresh?.(); // Call base class refresh just in case
-      this.injectReactComponent();
-      return true; // AG Grid expects a boolean
+    setupObserver() {
+      if (!this.eGui) return;
+      this.observer = new MutationObserver(() => {
+        this.injectReactComponent();
+      });
+      this.observer.observe(this.eGui, { childList: true, subtree: true });
     }
 
     injectReactComponent() {
@@ -25,7 +29,6 @@ const createCustomToolPanel = () => {
 
       for (const label of labels) {
         if (label.textContent?.includes("bbgActions")) {
-          // Clean up previous renders to avoid duplicate React trees
           ReactDOM.unmountComponentAtNode(label as Element);
           label.textContent = ""; // Or keep the text if you want
           ReactDOM.render(
@@ -37,6 +40,17 @@ const createCustomToolPanel = () => {
           break;
         }
       }
+    }
+
+    destroy() {
+      this.observer?.disconnect();
+      const labels = this.eGui?.querySelectorAll(".ag-column-select-label");
+      if (labels) {
+        for (const label of labels) {
+          ReactDOM.unmountComponentAtNode(label as Element);
+        }
+      }
+      super.destroy?.();
     }
   };
 };
