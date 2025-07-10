@@ -4,19 +4,23 @@ if (versionGreaterOrEqualThan(contentVersion, '1.20.1')) {
 
     if (!Array.isArray(columnState)) return;
 
-    // Usuń obie kolumny, jeśli istnieją
-    const bbgActionsIndex = columnState.findIndex(col => col.colId === 'bbgActions');
-    const bbgFunctionsIndex = columnState.findIndex(col => col.colId === 'bbgFunctions');
+    // Usuń bbgActions i bbgFunctions z tablicy
+    const rest = columnState.filter(
+      col => col.colId !== 'bbgActions' && col.colId !== 'bbgFunctions'
+    );
 
-    const bbgActionsCol = bbgActionsIndex !== -1 ? columnState.splice(bbgActionsIndex, 1)[0] : null;
-    const bbgFunctionsIndexAdjusted = bbgFunctionsIndex !== -1
-      ? (bbgFunctionsIndex > bbgActionsIndex ? bbgFunctionsIndex - 1 : bbgFunctionsIndex)
-      : -1;
-    const bbgFunctionsCol = bbgFunctionsIndexAdjusted !== -1 ? columnState.splice(bbgFunctionsIndexAdjusted, 1)[0] : null;
+    const bbgActionsCol = columnState.find(col => col.colId === 'bbgActions');
+    const bbgFunctionsCol = columnState.find(col => col.colId === 'bbgFunctions');
 
-    // Najpierw wstaw kolumnę o wyższym indeksie docelowym!
-    if (bbgFunctionsCol) columnState.splice(3, 0, bbgFunctionsCol); // index 3 = 4. pozycja
-    if (bbgActionsCol) columnState.splice(2, 0, bbgActionsCol);     // index 2 = 3. pozycja
+    // Wstaw na nowe miejsca: index 2 i 3 (czyli 3. i 4. miejsce)
+    const reordered = [
+      ...rest.slice(0, 2),           // kolumny 0 i 1
+      ...(bbgActionsCol ? [bbgActionsCol] : []), // na 3. miejsce (index 2)
+      ...(bbgFunctionsCol ? [bbgFunctionsCol] : []), // na 4. miejsce (index 3)
+      ...rest.slice(2)              // reszta kolumn
+    ];
+
+    grid.gridState.columnState = reordered;
   });
   return;
 }
