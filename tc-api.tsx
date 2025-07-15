@@ -1,18 +1,37 @@
-function myCellRenderer(params) {
-  const eDiv = document.createElement('div');
-  eDiv.innerText = `${params.value} (${params.label})`;
+function MyRenderer() {
+  let eGui;
 
-  eDiv.addEventListener('click', () => {
-    // update some external state/context that affects the label
-    params.context.dynamicLabel = 'Clicked';
+  this.init = function(params) {
+    eGui = document.createElement('div');
+    updateDom(params);
+  };
 
-    // trigger re-render
-    params.api.refreshCells({
-      rowNodes: [params.node],
-      columns: [params.column.getColId()],
-      force: true
-    });
-  });
+  this.refresh = function(params) {
+    // clear and rebuild inner DOM
+    updateDom(params);
+    return true; // returning true tells AG Grid "refresh was successful"
+  };
 
-  return eDiv;
+  this.getGui = function() {
+    return eGui;
+  };
+
+  function updateDom(params) {
+    // Clear any existing content
+    eGui.innerHTML = '';
+
+    // Create new content
+    const span = document.createElement('span');
+    span.innerText = params.value + ' | ' + params.cellRendererParams.label;
+
+    const button = document.createElement('button');
+    button.innerText = 'Click';
+    button.onclick = () => {
+      alert('Clicked');
+    };
+
+    // Add to DOM
+    eGui.appendChild(span);
+    eGui.appendChild(button);
+  }
 }
