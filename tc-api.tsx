@@ -1,5 +1,6 @@
 function MyRenderer() {
   let eGui;
+  this._lastParams = {};
 
   this.init = function(params) {
     eGui = document.createElement('div');
@@ -7,9 +8,36 @@ function MyRenderer() {
   };
 
   this.refresh = function(params) {
-    // clear and rebuild inner DOM
+    // 👇 Deep diff key fields across refresh calls
+    const changes = [];
+
+    const currentParams = {
+      value: params.value,
+      label: params.cellRendererParams?.label,
+      rowId: params.node.id,
+      dataId: params.data?.id,
+      classList: eGui.className,
+    };
+
+    for (const key in currentParams) {
+      const oldVal = this._lastParams[key];
+      const newVal = currentParams[key];
+      if (oldVal !== newVal) {
+        changes.push({ key, oldVal, newVal });
+      }
+    }
+
+    if (changes.length > 0) {
+      console.log('🔁 Refresh changes detected:', changes);
+    } else {
+      console.log('🔁 Refresh called — no changes');
+    }
+
+    this._lastParams = currentParams;
+
+    // ✅ optional actual refresh logic if needed
     updateDom(params);
-    return true; // returning true tells AG Grid "refresh was successful"
+    return true;
   };
 
   this.getGui = function() {
@@ -17,21 +45,9 @@ function MyRenderer() {
   };
 
   function updateDom(params) {
-    // Clear any existing content
     eGui.innerHTML = '';
-
-    // Create new content
     const span = document.createElement('span');
-    span.innerText = params.value + ' | ' + params.cellRendererParams.label;
-
-    const button = document.createElement('button');
-    button.innerText = 'Click';
-    button.onclick = () => {
-      alert('Clicked');
-    };
-
-    // Add to DOM
+    span.innerText = `Label: ${params.cellRendererParams.label}, Value: ${params.value}`;
     eGui.appendChild(span);
-    eGui.appendChild(button);
   }
 }
