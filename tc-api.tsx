@@ -1,53 +1,92 @@
-function MyRenderer() {
-  let eGui;
-  this._lastParams = {};
+import type { ICellRendererComp, ICellRendererParams } from 'ag-grid-community';
 
-  this.init = function(params) {
-    eGui = document.createElement('div');
-    updateDom(params);
-  };
+export class ButtonRenderer implements ICellRendererComp {
+  private eGui!: HTMLElement;
+  // We’ll cache a stable reference (here, just the length) so we render only if that changes.
+  private lastDataLength: number = 0;
 
-  this.refresh = function(params) {
-    // 👇 Deep diff key fields across refresh calls
-    const changes = [];
-
-    const currentParams = {
-      value: params.value,
-      label: params.cellRendererParams?.label,
-      rowId: params.node.id,
-      dataId: params.data?.id,
-      classList: eGui.className,
-    };
-
-    for (const key in currentParams) {
-      const oldVal = this._lastParams[key];
-      const newVal = currentParams[key];
-      if (oldVal !== newVal) {
-        changes.push({ key, oldVal, newVal });
-      }
-    }
-
-    if (changes.length > 0) {
-      console.log('🔁 Refresh changes detected:', changes);
-    } else {
-      console.log('🔁 Refresh called — no changes');
-    }
-
-    this._lastParams = currentParams;
-
-    // ✅ optional actual refresh logic if needed
-    updateDom(params);
-    return true;
-  };
-
-  this.getGui = function() {
-    return eGui;
-  };
-
-  function updateDom(params) {
-    eGui.innerHTML = '';
-    const span = document.createElement('span');
-    span.innerText = `Label: ${params.cellRendererParams.label}, Value: ${params.value}`;
-    eGui.appendChild(span);
+  init(params: ICellRendererParams): void {
+    this.eGui = document.createElement('div');
+    // Suppose the BE data is passed in as params.cellRendererParams.data (an array)
+    const data: any[] = params.cellRendererParams?.data ?? [];
+    this.lastDataLength = data.length;
+    this.renderButtons(params, data);
   }
+
+  refresh(params: ICellRendererParams): boolean {
+    // Retrieve the fetched data from cellRendererParams
+    const newData: any[] = params.cellRendererParams?.data ?? [];
+    const newLength = newData.length;
+
+    // Only update the DOM if the length has changed.
+    // (You might also compare other stable properties if needed.)
+    if (newLength !== this.lastDataLength) {
+      this.lastDataLength = newLength;
+      this.renderButtons(params, newData);
+    }
+    return true;
+  }
+
+  getGui(): HTMLElement {
+    return this.eGui;
+  }
+
+  destroy(): void {
+    // If you attached any event listeners or timers outside
+    // of the returned eGui, clean them up here.
+    // (In this simple case, nothing extra is needed.)
+  }
+
+  private renderButtons(params: ICellRendererParams, data: any[]): void {
+    // Clear the container
+    this.eGui.innerHTML = '';
+
+    // For each item in the fetched data, create a button.
+    data.forEach((item, index) => {
+      const btn = document.createElement('button');
+      // For example, suppose each item has a "label" property.
+      btn.innerText = item.label || `Button ${index + 1}`;
+      btn.addEventListener('click', () => {
+        // Handle click as needed—for example, alert the item ID.
+        alert(`Clicked: ${item.id}`);
+      });
+      this.eGui.appendChild(btn);
+    });
+  }
+}
+
+
+
+
+
+
+
+const columnDefs = useMemo(() => [
+  {
+    field: 'actions',
+    cellRenderer: ButtonRenderer,
+    // WARNING: Make sure you pass a stable reference!
+    cellRendererParams: { data: fetchedData }
+  }
+], [fetchedData]);
+
+
+
+
+
+
+
+
+refresh(params: ICellRendererParams): boolean {
+  const newData: any[] = params.cellRendererParams?.data ?? [];
+  const newLength = newData.length;
+  
+  console.log('Refresh called: new length =', newLength, 'cached length =', this.lastDataLength);
+  
+  if (newLength !== this.lastDataLength) {
+    console.log('Data length changed, re-rendering buttons.');
+    this.lastDataLength = newLength;
+    this.renderButtons(params, newData);
+  }
+  return true;
 }
