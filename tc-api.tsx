@@ -1,25 +1,38 @@
-import type { ICellRendererComp, ICellRendererParams } from 'ag-grid-community';
+const storageRef = useRef<{
+  content: any[];
+  notifyList: Set<() => void>;
+}>({
+  content: storage.launchpads,
+  notifyList: new Set(),
+});
 
-export class ButtonRenderer implements ICellRendererComp {
-  private eGui!: HTMLElement;
-  private lastDataLength: number = 0;
+useEffect(() => {
+  storageRef.current.content = storage.launchpads;
+  storageRef.current.notifyList.forEach(fn => fn()); // 🔔 notify all renderers
+}, [storage.launchpads]);
 
-  init(params: ICellRendererParams & { context: any }): void {
-    this.eGui = document.createElement('div');
 
-    const ref = params.context?.storageRef;
-    if (ref) {
-      ref.notify = () => {
-        const data = ref.current?.content ?? [];
-        if (data.length !== this.lastDataLength) {
-          this.lastDataLength = data.length;
-          this.renderButtons(data);
-        }
-      };
+init(params: ICellRendererParams & { context: any }): void {
+  this.eGui = document.createElement('div');
+
+  const ref = params.context?.storageRef;
+  const update = () => {
+    const data = ref.current?.content ?? [];
+    if (data.length !== this.lastDataLength) {
+      this.lastDataLength = data.length;
+      this.renderButtons(data);
     }
+  };
 
-    const data: any[] = ref?.current?.content ?? [];
-    this.lastDataLength = data.length;
-    this.renderButtons(data);
-  }
+  // Register this renderer's callback
+  ref?.notifyList?.add(update);
+  this.cleanup = () => ref?.notifyList?.delete(update);
+
+  // Initial render
+  update();
+}
+
+
+destroy(): void {
+  this.cleanup?.(); // ✅ clean up to prevent memory leaks
 }
