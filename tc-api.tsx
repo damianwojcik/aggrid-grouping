@@ -1,58 +1,26 @@
-import type { ICellRendererComp, ICellRendererParams } from 'ag-grid-community';
+init(params: ICellRendererParams & { context: any }): void {
+  this.eGui = document.createElement('div');
 
-export class ButtonRenderer implements ICellRendererComp {
-  private eGui!: HTMLElement;
-  private lastDataLength: number = 0;
-  private cleanup?: () => void;
+  const ref = params.context?.storageRef;
 
-  init(params: ICellRendererParams & { context: any }): void {
-    this.eGui = document.createElement('div');
+  // Create the render function for this cell
+  const render = () => {
+    const data = ref.current?.content ?? [];
 
-    const ref = params.context?.storageRef;
+    if (data.length !== this.lastDataLength) {
+      this.lastDataLength = data.length;
+      this.render(data);
+    }
+  };
 
-    const render = () => {
-      const data = ref.current?.content ?? [];
+  // ✅ Register in notify list
+  ref?.notifyList.add(render);
 
-      if (data.length !== this.lastDataLength) {
-        this.lastDataLength = data.length;
-        this.render(data);
-      }
-    };
+  // ✅ Store the cleanup function (to remove it later)
+  this.cleanup = () => {
+    ref?.notifyList.delete(render);
+  };
 
-    // Subscribe this instance
-    ref?.notifyList.add(render);
-
-    // Save unsubscribe logic for later
-    this.cleanup = () => {
-      ref?.notifyList.delete(render);
-    };
-
-    // Initial render
-    render();
-  }
-
-  refresh(): boolean {
-    return true; // prevent AG Grid from destroying/replacing the DOM
-  }
-
-  getGui(): HTMLElement {
-    return this.eGui;
-  }
-
-  destroy(): void {
-    this.cleanup?.(); // Unsubscribe from notify list
-  }
-
-  private render(data: any[]): void {
-    this.eGui.innerHTML = '';
-
-    data.forEach((item, index) => {
-      const btn = document.createElement('button');
-      btn.innerText = item.label || `Button ${index + 1}`;
-      btn.addEventListener('click', () => {
-        alert(`Clicked: ${item.id}`);
-      });
-      this.eGui.appendChild(btn);
-    });
-  }
+  // Initial render
+  render();
 }
