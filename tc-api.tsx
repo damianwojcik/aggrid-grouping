@@ -1,3 +1,1 @@
-type extension<Props = {}> = {
-  ContextProvider: React.ComponentType<Props & { children?: React.ReactNode }>
-}
+  ContextProvider: <T = {}>(props: T & { children?: React.ReactNode }) => JSX.Element
