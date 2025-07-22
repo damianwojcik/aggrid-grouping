@@ -1,3 +1,3 @@
-React.FC<{ children: React.ReactNode }>
-
-React.ComponentType<{ children?: React.ReactNode }>
+type extension<Props = {}> = {
+  ContextProvider: React.ComponentType<Props & { children?: React.ReactNode }>
+}
