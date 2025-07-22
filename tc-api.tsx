@@ -1,26 +1,16 @@
-init(params: ICellRendererParams & { context: any }): void {
-  this.eGui = document.createElement('div');
+const wrapWithProviders = (providers: extension[], children: React.ReactNode): React.ReactNode => {
+  return providers.reduceRight((acc, extension, index) => {
+    const Provider = extension.ContextProvider;
+    return <Provider key={index}>{acc}</Provider>;
+  }, children);
+};
 
-  const ref = params.context?.storageRef;
-
-  // Create the render function for this cell
-  const render = () => {
-    const data = ref.current?.content ?? [];
-
-    if (data.length !== this.lastDataLength) {
-      this.lastDataLength = data.length;
-      this.render(data);
-    }
-  };
-
-  // ✅ Register in notify list
-  ref?.notifyList.add(render);
-
-  // ✅ Store the cleanup function (to remove it later)
-  this.cleanup = () => {
-    ref?.notifyList.delete(render);
-  };
-
-  // Initial render
-  render();
-}
+return (
+  <AppContextProvider>
+    <StorageContextProvider>
+      <GridContextProvider>
+        {wrapWithProviders(extensions, children)}
+      </GridContextProvider>
+    </StorageContextProvider>
+  </AppContextProvider>
+);
