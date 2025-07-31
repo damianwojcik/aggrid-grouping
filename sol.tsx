@@ -1,26 +1,72 @@
-if (versionGreaterOrEqualThan(contentVersion, '1.20.1')) {
-  iterateViews(content, ({ grid }) => {
-    const { columnState } = grid.gridState;
+// views/src/Views.tsx
+import React, { useImperativeHandle, useRef, forwardRef } from 'react';
 
-    if (!Array.isArray(columnState)) return;
+export type DraftView = {
+  id: string;
+  label: string;
+  extra: Record<string, any>;
+};
 
-    // Usuń bbgActions i bbgFunctions z tablicy
-    const rest = columnState.filter(
-      col => col.colId !== 'bbgActions' && col.colId !== 'bbgFunctions'
-    );
+export type ViewsApi = {
+  addTemporaryView: (
+    callback: (id: string, label: string, draftView: DraftView) => void
+  ) => void;
+};
 
-    const bbgActionsCol = columnState.find(col => col.colId === 'bbgActions');
-    const bbgFunctionsCol = columnState.find(col => col.colId === 'bbgFunctions');
+const Views = forwardRef<ViewsApi, {}>((props, ref) => {
+  const viewsRef = useRef<DraftView[]>([]);
 
-    // Wstaw na nowe miejsca: index 2 i 3 (czyli 3. i 4. miejsce)
-    const reordered = [
-      ...rest.slice(0, 2),           // kolumny 0 i 1
-      ...(bbgActionsCol ? [bbgActionsCol] : []), // na 3. miejsce (index 2)
-      ...(bbgFunctionsCol ? [bbgFunctionsCol] : []), // na 4. miejsce (index 3)
-      ...rest.slice(2)              // reszta kolumn
-    ];
+  useImperativeHandle(ref, () => ({
+    addTemporaryView: (callback) => {
+      const id = crypto.randomUUID(); // or some ID generator
+      const label = 'New view';
+      const draftView: DraftView = {
+        id,
+        label,
+        extra: {},
+      };
 
-    grid.gridState.columnState = reordered;
-  });
-  return;
-}
+      callback(id, label, draftView);
+      viewsRef.current.push(draftView);
+    },
+  }));
+
+  return (
+    <div>
+      {/* Render your views here */}
+    </div>
+  );
+});
+
+export default Views;
+
+
+// panel/src/Panel.tsx
+import React, { useRef } from 'react';
+import Views, { ViewsApi } from 'views'; // from your views lib
+
+const Panel = () => {
+  const viewsRef = useRef<ViewsApi>(null);
+
+  const handleAdd = () => {
+    viewsRef.current?.addTemporaryView((id, label, draftView) => {
+      draftView.extra.abc = 5;
+    });
+  };
+
+  return (
+    <>
+      <button onClick={handleAdd}>Add View</button>
+      <Views ref={viewsRef} />
+    </>
+  );
+};
+
+export default Panel;
+
+export { default } from './Views';
+export type { ViewsApi, DraftView } from './Views';
+
+viewsRef.current?.addTemporaryView((id, label, draftView) => {
+  draftView.extra.abc = 5;
+});
