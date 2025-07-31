@@ -1,12 +1,36 @@
-updateTemporaryView(
-  viewInfo: { id?: string; label?: string; parentId?: string },
-  update?: (draftView: DraftView) => Promise<void>
-): string
+const Views = forwardRef<ViewsApi, Props>(({ }, ref) => {
+  const viewsRef = useRef<DraftView[]>([]);
+  const store = useStore();
 
- useImperativeHandle(ref, () => ({
+  // ✅ Any store setup before api is created
+  const somethingAtom = atom(0);
+
+  // Example: set initial value or handler
+  useEffect(() => {
+    store.set(somethingAtom, 42);
+
+    // you can also set handlers here if needed
+    // store.set(handlerAtom, () => ...)
+
+  }, [store]); // runs once
+
+  // ✅ Now store is ready – safe to create API
+  const api = useViewsApi(viewsRef, store);
+
+  useImperativeHandle(ref, () => api);
+
+  return <div>{/* render */}</div>;
+});
+
+
+function useViewsApi(
+  viewsRef: React.RefObject<DraftView[]>,
+  store: ReturnType<typeof useStore>
+): ViewsApi {
+  return {
     updateTemporaryView: ({ id, label, parentId }, update) => {
       const resolvedId = id ?? crypto.randomUUID();
-      let draftView = viewsRef.current.find(v => v.id === resolvedId);
+      let draftView = viewsRef.current!.find(v => v.id === resolvedId);
 
       if (!draftView) {
         draftView = {
@@ -15,24 +39,20 @@ updateTemporaryView(
           parentId,
           extra: {},
         };
-        viewsRef.current.push(draftView);
+        viewsRef.current!.push(draftView);
       } else {
         if (label) draftView.label = label;
         if (parentId) draftView.parentId = parentId;
       }
 
       if (update) {
-        // Fire and forget – caller handles the Promise if needed
         void update(draftView);
       }
 
+      // ✅ Access Jotai values here too
+      const someVal = store.get(somethingAtom);
+
       return resolvedId;
     },
-  }));
-
-  viewsRef.current?.updateTemporaryView(
-  { label: 'My New View' },
-  async (draftView) => {
-    draftView.extra.abc = 5;
-  }
-);
+  };
+}
