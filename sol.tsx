@@ -1,18 +1,26 @@
-function getGroupingData(node: any): { field: string; value: any }[] {
-  const result: { field: string; value: any }[] = [];
+import type { IRowNode } from 'ag-grid-community';
 
-  let currentNode = node;
+function getGroupingData(node: IRowNode<any>): { field: string; value: string }[] {
+  const result: { field: string; value: string }[] = [];
+
+  let currentNode: IRowNode<any> | null = node;
+
   while (currentNode) {
-    if (currentNode.field) {
+    if (currentNode.field && currentNode.data) {
       result.push({
         field: currentNode.field,
-        value: currentNode.data?.[currentNode.field],
+        value: String(currentNode.data[currentNode.field]),
       });
     }
-    currentNode = currentNode.parent;
+
+    // Safe way to check parent
+    if (currentNode.parent) {
+      currentNode = currentNode.parent;
+    } else {
+      break; // No more parents
+    }
   }
 
-  // Reverse so that the top-most parent is first
   return result.reverse();
 }
 
