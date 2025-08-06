@@ -1,8 +1,11 @@
-const existingView = id ? getItemById(temporaryViews, id) : undefined;
+const draftViewId = draftView.path.at(-1);
 
-const shouldCreateNew =
-  !existingView && currentView?.type !== ViewType.ViewTemporary;
+const updatedTemporaryViews = temporaryViews.some(
+  v => v.path.at(-1) === draftViewId
+)
+  ? temporaryViews.map(v =>
+      v.path.at(-1) === draftViewId ? draftView : v
+    )
+  : [...temporaryViews, draftView];
 
-const draftView = shouldCreateNew
-  ? create(ViewType.ViewTemporary, label, id, parentId)
-  : existingView!;
+store.set(temporaryViewsAtom, updatedTemporaryViews);
