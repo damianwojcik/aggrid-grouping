@@ -1,8 +1,11 @@
-  onColumnRowGroupChanged={onColumnRowGroupChanged}
+const onColumnRowGroupChanged = (params: ColumnRowGroupChangedEvent) => {
+  const allCols = params.columnApi.getAllGridColumns();
 
-  const onColumnRowGroupChanged = useCallback((params: ColumnRowGroupChangedEvent) => {
-  const autoGroupCol = params.columnApi.getAllGridColumns().find(col => col.getColId()?.includes('auto_group'));
-  if (autoGroupCol) {
-    params.columnApi.moveColumn(autoGroupCol, 0);
+  const autoGroupCol = allCols.find(col => col.getColId()?.includes('auto_group'));
+  const actionsCol = allCols.find(col => col.getColId() === 'actions');
+
+  if (autoGroupCol && actionsCol) {
+    const autoGroupIndex = allCols.indexOf(autoGroupCol);
+    params.columnApi.moveColumn(actionsCol.getColId(), autoGroupIndex + 1);
   }
-}, []);
+};
