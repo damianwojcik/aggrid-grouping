@@ -1,2 +1,3 @@
-const existingView = id ? getItemById(views, id) : undefined;
-const draftView = existingView ?? create(ViewType.ViewTemporary, label, id, parentId);
+     if (existingView && parentId && id) {
+        draftView.path = [parentId, id];
+      }
