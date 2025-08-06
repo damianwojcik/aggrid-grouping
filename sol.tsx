@@ -1,9 +1,8 @@
-function hasGrouping(
-  view: any
-): view is { extra: { grouping: { enabled: boolean } } } {
-  return (
-    'extra' in view &&
-    'grouping' in view.extra &&
-    typeof view.extra.grouping?.enabled === 'boolean'
-  );
-}
+  onColumnRowGroupChanged={onColumnRowGroupChanged}
+
+  const onColumnRowGroupChanged = useCallback((params: ColumnRowGroupChangedEvent) => {
+  const autoGroupCol = params.columnApi.getAllGridColumns().find(col => col.getColId()?.includes('auto_group'));
+  if (autoGroupCol) {
+    params.columnApi.moveColumn(autoGroupCol, 0);
+  }
+}, []);
