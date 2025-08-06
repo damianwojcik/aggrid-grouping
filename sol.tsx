@@ -1,19 +1,9 @@
-const getClipboardStringFromNode = (params) => {
-  const node = params.node;
-  if (!node?.data) return '';
-
-  const visibleColumns = params.columnApi.getAllDisplayedColumns();
-
-  return visibleColumns
+  const values = visibleColumns
     .map(col => {
       const field = col.getColDef().field;
-      if (!field) return ''; // skip columns without a field
-      const value = node.data[field];
-      return value != null ? value : ''; // skip undefined/null
+      if (!field) return undefined;
+      return node.data[field] ?? '';
     })
-    .join('\t');
-};
+    .filter(value => value !== undefined); // skip columns without field
 
-
-    const text = getClipboardStringFromNode(params);
-    navigator.clipboard.writeText(text);
+  return values.join('\t');
