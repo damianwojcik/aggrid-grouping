@@ -1,8 +1,2 @@
-  width: 12px;
-  height: 12px;
-
-  background-color: black; /* this is the icon "color" */
-  mask-image: url('/icons/my-icon.svg');
-  mask-repeat: no-repeat;
-  mask-size: contain;
-  mask-position: center;
+const targetIndex = arr.findIndex(v => v.path.length === 1 && v.path[0] === 'abc');
+arr.splice(targetIndex + 1, 0, newView);
