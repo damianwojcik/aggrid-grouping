@@ -1,15 +1,8 @@
-.icon::before {
-  content: '';
-  display: inline-block;
   width: 12px;
   height: 12px;
-  background-image: url(...);
-  background-size: 16px 16px; /* or auto if needed */
-}
 
-
-.icon {
-  width: 12px;
-  height: 12px;
-  object-fit: contain; /* optional, keeps proportions */
-}
+  background-color: black; /* this is the icon "color" */
+  mask-image: url('/icons/my-icon.svg');
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  mask-position: center;
