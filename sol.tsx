@@ -1,3 +1,55 @@
+// build the side bar def whenever deps change
+const sideBar = useMemo<SideBarDef>(() => ({
+  toolPanels: [
+    {
+      id: 'columns',
+      labelDefault: 'Columns',
+      toolPanel: createCustomToolPanel(), // no captured state here
+      toolPanelParams: {
+        extensions,
+        getSelectedViewType: () => selectedViewType, // <-- live getter
+      },
+    },
+  ],
+}), [extensions, selectedViewType]);
+
+// pass sideBar to <AgGridReact sideBar={sideBar} />
+
+
+
+const createCustomToolPanel = () => {
+  return class CustomToolPanel extends ColumnsToolPanel {
+    private getSelectedViewType!: () => ViewType;
+    private extensions!: any;
+
+    // AG Grid calls init on tool panels
+    public init(params: any) {
+      super.init(params);
+      this.extensions = params.toolPanelParams.extensions;
+      this.getSelectedViewType = params.toolPanelParams.getSelectedViewType;
+    }
+
+    public refresh() {
+      const type = this.getSelectedViewType();
+      // update UI based on latest type
+      // ...
+      return true; // per AG Grid contract
+    }
+  };
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 // whatever gives you the current view type
 const viewType = currentView?.type; // 'view-temporary' | 'view-normal' | ...
 
