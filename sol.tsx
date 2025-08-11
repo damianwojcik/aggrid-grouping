@@ -1,29 +1,45 @@
-export const useSidebar = (extensions: any, selectedViewType: ViewType): SideBarDef => {
-  console.log('!!! sidebar', { selectedViewType });
+// whatever gives you the current view type
+const viewType = currentView?.type; // 'view-temporary' | 'view-normal' | ...
 
-  const ColumnToolPanel = createCustomToolPanel(extensions, selectedViewType);
+return (
+  <div className="app" data-view-type={viewType}>
+    <Toolbar>
+      <button className="btn-toggle">Toggle</button>
+      <button className="btn-apply-all">Apply to all views</button>
+      {/* ...rest */}
+    </Toolbar>
+    {/* rest of app */}
+  </div>
+);
 
-  // Function to refresh the tool panel
-  const refreshToolPanel = () => {
-    return {
-      toolPanels: [ColumnToolPanel],
-    };
-  };
 
-  // Side bar definition
-  const sideBarDef = {
-    // Other properties you might want to include in the sidebar
-    sideBar: {
-      ...refreshToolPanel(), // Add tool panels to sideBar configuration
-      // Include other configurations, e.g., default tool panels, visibility, etc.
-    },
-    // You may have other properties for the sidebar or other components
-  };
+/* Hide entirely when view is temporary */
+[data-view-type="view-temporary"] .btn-toggle,
+[data-view-type="view-temporary"] .btn-apply-all {
+  display: none;
+}
 
-  useEffect(() => {
-    // Whenever selectedViewType changes, you may want to trigger any side effect
-    refreshToolPanel(); // This will update the tool panels when selectedViewType changes
-  }, [selectedViewType]);
+/* If you prefer to keep layout space but disable interaction: */
+/*
+[data-view-type="view-temporary"] .btn-toggle,
+[data-view-type="view-temporary"] .btn-apply-all {
+  visibility: hidden;
+  pointer-events: none;
+}
+*/
 
-  return sideBarDef; // Return the full sidebar definition with toolPanels
-};
+
+<div className={s.app} data-view-type={viewType}>
+  <button className={s.toggleBtn}>Toggle</button>
+  <button className={s.applyAllBtn}>Apply to all views</button>
+</div>
+
+
+/* App.module.css */
+[data-view-type="view-temporary"] .toggleBtn,
+[data-view-type="view-temporary"] .applyAllBtn {
+  display: none;
+}
+
+
+document.querySelector('[data-view-type="view-temporary"]')
