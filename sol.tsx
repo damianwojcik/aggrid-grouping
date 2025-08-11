@@ -1,22 +1,22 @@
 export const useSidebar = (extensions: any, selectedViewType: ViewType): SideBarDef => {
-  console.log('!!! sidebar', {selectedViewType}); // selectedViewType changes
-  
-  const ColumnToolPanel = createCustomToolPanel(extensions, selectedViewType); 
+  console.log('!!! sidebar', { selectedViewType });
 
-  // Trigger a refresh when selectedViewType changes
-  const api = extensions.gridOptions.api;
+  const ColumnToolPanel = createCustomToolPanel(extensions, selectedViewType);
+
+  // Function to refresh the tool panel
   const refreshToolPanel = () => {
-    const toolPanelInstance = api.getToolPanelInstance('columns'); // Assuming 'columns' is your tool panel ID
-    if (toolPanelInstance) {
-      toolPanelInstance.refresh(); // Trigger refresh of the tool panel
-    }
+    // Directly return the updated sidebar configuration with new tool panel
+    return {
+      sideBar: {
+        toolPanels: [ColumnToolPanel],
+      },
+    };
   };
 
   useEffect(() => {
-    refreshToolPanel(); // Call refresh every time selectedViewType changes
+    // Trigger refresh every time selectedViewType changes
+    refreshToolPanel(); // Refresh the sidebar tool panel with the new state
   }, [selectedViewType]); // Dependency array ensures it runs on changes
 
-  return {
-    // Your sidebar code here
-  };
+  return refreshToolPanel(); // Return updated sidebar configuration
 };
