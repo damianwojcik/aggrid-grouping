@@ -1,10 +1,23 @@
-const staticSerializeFunctionFromViews = (content: ViewsState) => {
-  // Wyodrębnij tymczasowe widoki
-  const strippedContent = content.views.filter(view => isTemporaryViewDef(view));
-  
-  // Usuń tymczasowe widoki z oryginalnego obiektu
-  content.views = content.views.filter(view => !isTemporaryViewDef(view));
+const serialize = (content: ViewsState): { removedContent: ViewsState } => {
+  const allViews = content.viewsComponent.views;
+  const removedViews = allViews.filter(view => isTemporaryViewDef(view));
+  const remainingViews = allViews.filter(view => !isTemporaryViewDef(view));
 
-  // Zwróć to, co zostało usunięte
-  return { strippedContent };
+  content.viewsComponent.views = remainingViews;
+
+  return {
+    removedContent: {
+      viewsComponent: {
+        views: removedViews
+      }
+    }
+  };
+};
+
+
+const deserialize = (content: ViewsState, removedContent: ViewsState) => {
+  content.viewsComponent.views = [
+    ...content.viewsComponent.views,
+    ...removedContent.viewsComponent.views
+  ];
 };
