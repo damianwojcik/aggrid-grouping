@@ -1,14 +1,10 @@
 const staticSerializeFunctionFromViews = (content: ViewsState) => {
-  const strippedContent: typeof content.views = [];
+  // Wyodrębnij tymczasowe widoki
+  const strippedContent = content.views.filter(view => isTemporaryViewDef(view));
+  
+  // Usuń tymczasowe widoki z oryginalnego obiektu
+  content.views = content.views.filter(view => !isTemporaryViewDef(view));
 
-  // Mutate in-place: go backwards and remove matching items
-  for (let i = content.views.length - 1; i >= 0; i--) {
-    const view = content.views[i];
-    if (isTemporaryViewDef(view)) {
-      strippedContent.push(view);
-      content.views.splice(i, 1); // this is the actual mutation
-    }
-  }
-
+  // Zwróć to, co zostało usunięte
   return { strippedContent };
 };
