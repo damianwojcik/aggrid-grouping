@@ -1,23 +1,7 @@
-const serialize = (content: ViewsState): { removedContent: ViewsState } => {
-  const allViews = content.viewsComponent.views;
-  const removedViews = allViews.filter(view => isTemporaryViewDef(view));
-  const remainingViews = allViews.filter(view => !isTemporaryViewDef(view));
+const index = viewsComponentsDraft.views.findIndex(v => v.id === draftView.id);
 
-  content.viewsComponent.views = remainingViews;
-
-  return {
-    removedContent: {
-      viewsComponent: {
-        views: removedViews
-      }
-    }
-  };
-};
-
-
-const deserialize = (content: ViewsState, removedContent: ViewsState) => {
-  content.viewsComponent.views = [
-    ...content.viewsComponent.views,
-    ...removedContent.viewsComponent.views
-  ];
-};
+if (index === -1) {
+  viewsComponentsDraft.views.unshift(draftView);
+} else {
+  viewsComponentsDraft.views[index] = draftView;
+}
