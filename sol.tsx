@@ -1,16 +1,9 @@
-const deserialize = (content: ViewsState, removedContent: ViewsState) => {
-  const existingIds = new Set(
-    content.viewsComponent.views.map((v) => getItemId(v))
-  );
+  console.log('AFTER combinedUpdater', draft.viewsComponent.views.map(getItemId));
 
-  const filtered = removedContent.viewsComponent.views.filter(
-    (v) => !existingIds.has(getItemId(v))
-  );
+  if (strippedContent) {
+    deserialize(draft, strippedContent);
+    console.log('AFTER deserialize', draft.viewsComponent.views.map(getItemId));
+  }
 
-  content.viewsComponent.views = [
-    ...content.viewsComponent.views,
-    ...filtered
-  ].filter(
-    (v, i, arr) => i === arr.findIndex((x) => getItemId(x) === getItemId(v))
-  );
-};
+  const { strippedContent: newStrippedContent } = serialize(draft) ?? {};
+  console.log('NEW strippedContent', newStrippedContent.viewsComponent.views.map(getItemId));
