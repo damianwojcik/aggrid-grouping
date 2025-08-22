@@ -1,9 +1,6 @@
-  console.log('AFTER combinedUpdater', draft.viewsComponent.views.map(getItemId));
+const draft = structuredClone(optimisticNextContent);
+serialize?.(draft);
 
-  if (strippedContent) {
-    deserialize(draft, strippedContent);
-    console.log('AFTER deserialize', draft.viewsComponent.views.map(getItemId));
-  }
-
-  const { strippedContent: newStrippedContent } = serialize(draft) ?? {};
-  console.log('NEW strippedContent', newStrippedContent.viewsComponent.views.map(getItemId));
+if (equal(draft, optimisticNextContent)) {
+  return; // nic się nie zmieniło, nie zapisuj
+}
