@@ -1,14 +1,24 @@
-const onSave = () => {
-  // 1. Przywróć tymczasowe widoki do content
-  const fullContent = deepClone(content); // NIE mutuj contenta bezpośrednio
-  deserialize(fullContent, strippedContent);
+await storageWrite(async (draft) => {
+  // 1. Najpierw zastosuj zmiany z UI
+  await combinedUpdater(draft);
 
-  // 2. Usuń je na nowo
-  const { strippedContent: newStripped } = serialize(fullContent);
+  // 2. Przywróć tylko te tymczasowe widoki, które nadal mają sens
+  if (strippedContent) {
+    const strippedViews = strippedContent.viewsComponent.views;
+    const currentIds = new Set(draft.viewsComponent.views.map(v => v.id));
 
-  // 3. Zapisz content bez tymczasowych
-  write(fullContent);
+    const stillValid = strippedViews.filter(v => !currentIds.has(v.id));
 
-  // 4. Zaktualizuj lokalny stan strippedContent
-  setStrippedContent(newStripped);
-};
+    deserialize(draft, {
+      viewsComponent: {
+        views: stillValid
+      }
+    });
+  }
+
+  // 3. Serializuj nowy stan
+  const { strippedContent: newStrippedContent } = serialize(draft) ?? {};
+
+  // 4. Zapisz aktualny strippedContent
+  setStrippedContent(newStrippedContent);
+});
