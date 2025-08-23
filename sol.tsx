@@ -1,21 +1,83 @@
-/**
- * Creates or updates a temporary view inside the `viewsComponent`.
- *
- * - If `id` is provided and matches a temporary view, it updates that view.
- * - If no matching view is found and `selectedView?.type !== ViewType.ViewTemporary`, a new temporary view is created.
- * - The provided `update` callback can mutate the `draftView` before saving.
- * - Automatically sets `label`, `parentId`, `path`, and clones `extra` from `selectedView` when appropriate.
- * - Disables grouping if the view has grouping enabled.
- *
- * @param {Object} viewInfo - Info about the view to create or update.
- * @param {string} [viewInfo.id] - ID of the view to update. If not provided, a new ID will be generated.
- * @param {string} [viewInfo.label] - Label of the view.
- * @param {string} [viewInfo.parentId] - Optional parent view ID to define the view's path.
- * @param {ViewType} [viewInfo.type=ViewType.ViewTemporary] - Type of the view to create (defaults to `ViewTemporary`).
- *
- * @param {(draftView: StrictViewContent) => Promise<void>} [update] - Optional async callback to modify the draft view before saving.
- *
- * @returns {Promise<string>} Resolves with the ID of the created or updated view.
- *
- * @throws Will reject the promise if the view cannot be found or created.
- */
+// BloombergTerminalConnectContext.tsx
+import React, { createContext, useContext, useState } from 'react';
+
+interface BloombergTerminalContextValue {
+  isConnected: boolean;
+  connect: () => Promise<void>;
+  // optionally expose Bloomberg API instance if needed
+}
+
+const BloombergTerminalContext = createContext<BloombergTerminalContextValue | null>(null);
+
+export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState(false);
+
+  const connect = async () => {
+    if (isConnected || hasAttempted) return;
+
+    setHasAttempted(true);
+
+    try {
+      // Your existing logic to connect to Bloomberg
+      await window.bloomberg.connect(); // Replace with your actual connection logic
+      setIsConnected(true);
+    } catch (err) {
+      console.warn('Bloomberg connection failed:', err);
+      // no throw — prevent crash, just log
+    }
+  };
+
+  return (
+    <BloombergTerminalContext.Provider value={{ isConnected, connect }}>
+      {children}
+    </BloombergTerminalContext.Provider>
+  );
+};
+
+export const useBloombergTerminal = () => {
+  const context = useContext(BloombergTerminalContext);
+  if (!context) throw new Error('useBloombergTerminal must be used within BloombergTerminalConnectProvider');
+  return context;
+};
+
+
+// modal
+import { useEffect, useState } from 'react';
+import { useBloombergTerminal } from '../context/BloombergTerminalConnectContext';
+
+const BloombergSettingsModal = () => {
+  const { connect } = useBloombergTerminal();
+  const [groups, setGroups] = useState([]);
+
+  useEffect(() => {
+    const init = async () => {
+      await connect();
+      const data = await window.bloomberg.getGroups(); // Replace with your actual API call
+      setGroups(data);
+    };
+
+    init();
+  }, []);
+
+  return (
+    <div>
+      {/* render your groups */}
+    </div>
+  );
+};
+
+
+// cellRenderer
+import { useBloombergTerminal } from '../context/BloombergTerminalConnectContext';
+
+const BBGActionButton = ({ rowData }) => {
+  const { connect } = useBloombergTerminal();
+
+  const handleClick = async () => {
+    await connect();
+    await window.bloomberg.performAction(rowData); // Replace with actual method
+  };
+
+  return <button onClick={handleClick}>BBG Action</button>;
+};
