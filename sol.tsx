@@ -1,10 +1,11 @@
-// BloombergTerminalConnectContext.tsx
 import React, { createContext, useContext, useState } from 'react';
 
 interface BloombergTerminalContextValue {
   isConnected: boolean;
+  hasAttempted: boolean;
+  hasFailed: boolean;
   connect: () => Promise<void>;
-  // optionally expose Bloomberg API instance if needed
+  reset: () => void; // manually allow retry
 }
 
 const BloombergTerminalContext = createContext<BloombergTerminalContextValue | null>(null);
@@ -12,24 +13,30 @@ const BloombergTerminalContext = createContext<BloombergTerminalContextValue | n
 export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [hasAttempted, setHasAttempted] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
 
   const connect = async () => {
     if (isConnected || hasAttempted) return;
 
     setHasAttempted(true);
-
     try {
-      // Your existing logic to connect to Bloomberg
-      await window.bloomberg.connect(); // Replace with your actual connection logic
+      await window.bloomberg.connect(); // or your API
       setIsConnected(true);
+      setHasFailed(false);
     } catch (err) {
       console.warn('Bloomberg connection failed:', err);
-      // no throw — prevent crash, just log
+      setHasFailed(true);
     }
   };
 
+  const reset = () => {
+    setHasAttempted(false);
+    setHasFailed(false);
+    setIsConnected(false);
+  };
+
   return (
-    <BloombergTerminalContext.Provider value={{ isConnected, connect }}>
+    <BloombergTerminalContext.Provider value={{ isConnected, hasAttempted, hasFailed, connect, reset }}>
       {children}
     </BloombergTerminalContext.Provider>
   );
@@ -41,28 +48,34 @@ export const useBloombergTerminal = () => {
   return context;
 };
 
-
 // modal
-import { useEffect, useState } from 'react';
 import { useBloombergTerminal } from '../context/BloombergTerminalConnectContext';
 
 const BloombergSettingsModal = () => {
-  const { connect } = useBloombergTerminal();
-  const [groups, setGroups] = useState([]);
+  const { isConnected, hasFailed, connect, reset } = useBloombergTerminal();
 
+  // TODO instead of this add this lazy to group dropdown as in cellRenderer
   useEffect(() => {
-    const init = async () => {
-      await connect();
-      const data = await window.bloomberg.getGroups(); // Replace with your actual API call
-      setGroups(data);
-    };
-
-    init();
+    connect();
   }, []);
+
+  const handleRetry = async () => {
+    reset();
+    await connect();
+  };
 
   return (
     <div>
-      {/* render your groups */}
+      {!isConnected && hasFailed && (
+        <div>
+          <p>Bloomberg connection failed. Please make sure the app is running.</p>
+          <button onClick={handleRetry}>Retry</button>
+        </div>
+      )}
+
+      {isConnected && (
+        <p>Bloomberg connected!</p>
+      )}
     </div>
   );
 };
