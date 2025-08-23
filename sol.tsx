@@ -1,52 +1,69 @@
-import React, { createContext, useContext, useState } from 'react';
+// BloombergTerminalConnectContext.tsx
+import React, { createContext, useContext, useState, useMemo } from 'react';
+import { useGroups } from 'your-bbg-lib'; // adjust import
+
+const API_KEY = 'your-api-key';
 
 interface BloombergTerminalContextValue {
   isConnected: boolean;
   hasAttempted: boolean;
   hasFailed: boolean;
-  connect: () => Promise<void>;
-  reset: () => void; // manually allow retry
+  connect: () => void;
+  reset: () => void;
+  tcClient: any | null;
 }
 
 const BloombergTerminalContext = createContext<BloombergTerminalContextValue | null>(null);
 
 export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [tcClient, setTcClient] = useState<any | null>(null);
   const [hasAttempted, setHasAttempted] = useState(false);
-  const [hasFailed, setHasFailed] = useState(false);
 
-  const connect = async () => {
-    if (isConnected || hasAttempted) return;
+  const connect = () => {
+    if (tcClient || hasAttempted) return;
 
     setHasAttempted(true);
     try {
-      await window.bloomberg.connect(); // or your API
-      setIsConnected(true);
-      setHasFailed(false);
+      const client = new window.TerminalConnectWebClient(API_KEY);
+      setTcClient(client);
     } catch (err) {
-      console.warn('Bloomberg connection failed:', err);
-      setHasFailed(true);
+      console.warn('Failed to create Bloomberg client:', err);
     }
   };
 
   const reset = () => {
+    setTcClient(null);
     setHasAttempted(false);
-    setHasFailed(false);
-    setIsConnected(false);
   };
 
+  // Use BBG hook once we have a client
+  const { loading, error, data } = useGroups(tcClient);
+
+  const isConnected = !!data && !loading;
+  const hasFailed = !!error;
+
+  const contextValue = useMemo(() => ({
+    isConnected,
+    hasAttempted,
+    hasFailed,
+    connect,
+    reset,
+    tcClient,
+  }), [isConnected, hasAttempted, hasFailed, connect, reset, tcClient]);
+
   return (
-    <BloombergTerminalContext.Provider value={{ isConnected, hasAttempted, hasFailed, connect, reset }}>
+    <BloombergTerminalContext.Provider value={contextValue}>
       {children}
     </BloombergTerminalContext.Provider>
   );
 };
 
 export const useBloombergTerminal = () => {
-  const context = useContext(BloombergTerminalContext);
-  if (!context) throw new Error('useBloombergTerminal must be used within BloombergTerminalConnectProvider');
-  return context;
+  const ctx = useContext(BloombergTerminalContext);
+  if (!ctx) throw new Error('useBloombergTerminal must be used within BloombergTerminalConnectProvider');
+  return ctx;
 };
+
 
 // modal
 import { useBloombergTerminal } from '../context/BloombergTerminalConnectContext';
