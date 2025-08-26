@@ -1,31 +1,91 @@
-const [tcClient, setTcClient] = useState<any | null>(null);
-const tempClientRef = useRef<any | null>(null);
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+} from 'react';
+import { useGroups } from 'your-bbg-api'; // Replace with actual path
 
-// Step 1: useGroups with temp client — for connection checking
-const tempGroups = useGroups(tempClientRef.current ?? undefined);
+const API_KEY = 'your-api-key';
 
-// Step 2: useGroups with tcClient — only when it's set
-const finalGroups = useGroups(tcClient ?? undefined); // ✅ safe
+interface BloombergTerminalContextValue {
+  isConnecting: boolean;
+  isConnected: boolean;
+  hasFailed: boolean;
+  connect: () => void;
+  reset: () => void;
+  tcClient: any | null;
+  groups: any;
+}
 
-const isConnecting = !!tempClientRef.current && tempGroups.loading;
-const isConnected = !!tempClientRef.current && !tempGroups.loading && !!tempGroups.data;
-const hasFailed = !!tempClientRef.current && Boolean(tempGroups.error);
+const BloombergTerminalContext = createContext<BloombergTerminalContextValue | null>(null);
 
-// ✅ Promote to real client only if connected
-useEffect(() => {
-  if (isConnected && tempClientRef.current) {
-    setTcClient(tempClientRef.current);
+export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [tcClient, setTcClient] = useState<any | null>(null);
+  const tempClientRef = useRef<any | null>(null);
+
+  // ✅ Safe connect: creates temp client, checks connection, promotes only if valid
+  const connect = () => {
+    if (tcClient || tempClientRef.current) return;
+
+    const client = new window.TerminalConnectWebClient(API_KEY);
+    tempClientRef.current = client;
+  };
+
+  const reset = () => {
     tempClientRef.current = null;
-  }
-}, [isConnected]);
+    setTcClient(null);
+  };
 
-// ✅ Expose only groups from fully connected client
-const contextValue = useMemo(() => ({
-  isConnecting,
-  isConnected,
-  hasFailed,
-  connect,
-  reset,
-  tcClient,
-  groups: finalGroups.data, // ✅ only from confirmed tcClient
-}), [isConnecting, isConnected, hasFailed, connect, reset, tcClient, finalGroups.data]);
+  // ✅ useGroups for temp client: connection checking
+  const tempGroups = useGroups(tempClientRef.current ?? undefined);
+
+  // ✅ useGroups for real client: only once it's confirmed
+  const finalGroups = useGroups(tcClient ?? undefined);
+
+  const isConnecting = !!tempClientRef.current && tempGroups.loading;
+  const isConnected = !!tempClientRef.current && !tempGroups.loading && !!tempGroups.data;
+  const hasFailed = !!tempClientRef.current && Boolean(tempGroups.error);
+
+  // ✅ Promote temp client to state only when connected
+  useEffect(() => {
+    if (isConnected && tempClientRef.current) {
+      setTcClient(tempClientRef.current);
+      tempClientRef.current = null;
+    }
+  }, [isConnected]);
+
+  const contextValue = useMemo(() => ({
+    isConnecting,
+    isConnected,
+    hasFailed,
+    connect,
+    reset,
+    tcClient,
+    groups: finalGroups.data, // ✅ only from confirmed client
+  }), [
+    isConnecting,
+    isConnected,
+    hasFailed,
+    connect,
+    reset,
+    tcClient,
+    finalGroups.data,
+  ]);
+
+  return (
+    <BloombergTerminalContext.Provider value={contextValue}>
+      {children}
+    </BloombergTerminalContext.Provider>
+  );
+};
+
+export const useBloombergTerminal = () => {
+  const ctx = useContext(BloombergTerminalContext);
+  if (!ctx) {
+    throw new Error('useBloombergTerminal must be used within BloombergTerminalConnectProvider');
+  }
+  return ctx;
+};
