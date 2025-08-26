@@ -1,12 +1,24 @@
-const status = useMemo(() => {
-  const isConnecting = !!tempTcClient && tempGroups.loading;
-  const isConnected = !!tempTcClient && !tempGroups.loading && !!tempGroups.data;
-  const hasFailed = !!tempTcClient && Boolean(tempGroups.error);
+const contextValue = useMemo(() => {
+  const isConnecting = !!tempClient && tempGroups.loading;
 
-  return { isConnecting, isConnected, hasFailed };
+  console.log('📦 memo recomputed → isConnecting:', isConnecting);
+
+  return {
+    isConnecting,
+    isConnected: !!tempClient && !tempGroups.loading && !!tempGroups.data,
+    hasFailed: !!tempClient && Boolean(tempGroups.error),
+    connect,
+    reset,
+    tcClient,
+    groups: tcClient ? finalGroups.data : null,
+  };
 }, [
-  tempTcClient,
+  tempClient,
   tempGroups.loading,
   tempGroups.data,
   tempGroups.error,
+  connect,
+  reset,
+  tcClient,
+  finalGroups.data,
 ]);
