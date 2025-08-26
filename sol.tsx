@@ -6,7 +6,7 @@ import React, {
   useRef,
   useEffect,
 } from 'react';
-import { useGroups } from 'your-bbg-api'; // Replace with actual path
+import { useGroups } from 'your-bbg-api'; // Replace with actual import
 
 const API_KEY = 'your-api-key';
 
@@ -26,7 +26,25 @@ export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactN
   const [tcClient, setTcClient] = useState<any | null>(null);
   const tempClientRef = useRef<any | null>(null);
 
-  // ✅ Safe connect: creates temp client, checks connection, promotes only if valid
+  // ✅ UseGroups on temp client to determine status
+  const tempGroups = useGroups(tempClientRef.current ?? undefined);
+
+  // ✅ UseGroups on confirmed client only
+  const finalGroups = useGroups(tcClient ?? undefined);
+
+  // ✅ Statuses ONLY from temp client
+  const isConnecting = !!tempClientRef.current && tempGroups.loading;
+  const isConnected = !!tempClientRef.current && !tempGroups.loading && !!tempGroups.data;
+  const hasFailed = !!tempClientRef.current && Boolean(tempGroups.error);
+
+  // ✅ Promote client to state ONLY if connection is successful
+  useEffect(() => {
+    if (isConnected && tempClientRef.current) {
+      setTcClient(tempClientRef.current);
+      tempClientRef.current = null;
+    }
+  }, [isConnected]);
+
   const connect = () => {
     if (tcClient || tempClientRef.current) return;
 
@@ -39,24 +57,6 @@ export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactN
     setTcClient(null);
   };
 
-  // ✅ useGroups for temp client: connection checking
-  const tempGroups = useGroups(tempClientRef.current ?? undefined);
-
-  // ✅ useGroups for real client: only once it's confirmed
-  const finalGroups = useGroups(tcClient ?? undefined);
-
-  const isConnecting = !!tempClientRef.current && tempGroups.loading;
-  const isConnected = !!tempClientRef.current && !tempGroups.loading && !!tempGroups.data;
-  const hasFailed = !!tempClientRef.current && Boolean(tempGroups.error);
-
-  // ✅ Promote temp client to state only when connected
-  useEffect(() => {
-    if (isConnected && tempClientRef.current) {
-      setTcClient(tempClientRef.current);
-      tempClientRef.current = null;
-    }
-  }, [isConnected]);
-
   const contextValue = useMemo(() => ({
     isConnecting,
     isConnected,
@@ -64,7 +64,7 @@ export const BloombergTerminalConnectProvider: React.FC<{ children: React.ReactN
     connect,
     reset,
     tcClient,
-    groups: finalGroups.data, // ✅ only from confirmed client
+    groups: tcClient ? finalGroups.data : null, // ✅ use only when promoted
   }), [
     isConnecting,
     isConnected,
