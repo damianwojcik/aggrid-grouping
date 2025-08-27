@@ -1,10 +1,13 @@
-function ConditionalWrapper({ condition, wrapper, children }) {
-  return condition ? wrapper(children) : children;
-}
+import { ReactNode } from "react";
 
-<ConditionalWrapper
-  condition={!!message}
-  wrapper={(children) => <div className="message">{children}</div>}
->
-  <span>{message}</span>
-</ConditionalWrapper>
+type ConditionalWrapperProps = {
+  condition: boolean;
+  wrapper: (children: ReactNode) => JSX.Element;
+  children: ReactNode;
+};
+
+const ConditionalWrapper: React.FC<ConditionalWrapperProps> = ({
+  condition,
+  wrapper,
+  children,
+}) => (condition ? wrapper(children) : <>{children}</>);
