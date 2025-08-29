@@ -1,28 +1,39 @@
+// useReactConnector.tsx
 const connect = useCallback(
-  <T,>(Component: React.ComponentType<T>): any => {
-    return class ReactConnector implements community.ICellEditorComp {
-      #key: string | undefined;
+  <P,>(Component: React.ComponentType<P>) => {
+    return class ReactConnector {
+      #key?: string;
       #div: HTMLDivElement;
-      // store the wrapped React component instance (set via ref)
-      private _component: any | undefined;
+      private _component: any;
 
       constructor() {
         this.#div = document.createElement('div');
         this.#div.className = DIV_PORTAL_CLASS_NAME;
+
+        // Return a proxy that forwards unknown props/methods to the wrapped instance
+        return new Proxy(this, {
+          get: (target, prop, receiver) => {
+            if (prop in target) {
+              return Reflect.get(target, prop, receiver);
+            }
+            const inst = target._component;
+            const val = inst?.[prop as any];
+            return typeof val === 'function' ? val.bind(inst) : val;
+          },
+        });
       }
 
       getGui() {
         return this.#div;
       }
 
-      init(params: T) {
+      init(params: P) {
         this.refresh(params);
       }
 
-      refresh(params: T) {
+      refresh(params: P) {
         this.destroy();
         this.#key = `react-connected-${Math.random().toString(36).slice(2)}`;
-        // IMPORTANT: pass a ref and capture the instance
         mount(
           this.#key,
           this.#div,
@@ -34,23 +45,27 @@ const connect = useCallback(
         return true;
       }
 
-      // ---- proxies to the React editor's imperative API ----
-getValue() {
-  return this._component?.getValue?.();
-}
-afterGuiAttached?(p?: any) {
-  this._component?.afterGuiAttached?.(p);
-}
-      // ------------------------------------------------------
-
       destroy() {
         if (this.#key) {
           unmount(this.#key);
-          this.#key = undefined;
           this._component = undefined;
+          this.#key = undefined;
         }
       }
-    };
+    } as any; // keep it generic/agnostic
   },
   [mount, unmount]
 );
+
+
+ useImperativeHandle(ref, () => ({
+      // ag-Grid will fetch this when editing ends
+      getValue: () => value,
+      // optional but handy: focus the input when attached
+      afterGuiAttached: () => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      },
+      // optional: let grid move focus into the editor
+      focusIn: () => inputRef.current?.focus(),
+    }));
