@@ -1,9 +1,18 @@
-.a {
-  /* mimic border-bottom: 1px solid red */
-  box-shadow: inset 0 -1px 0 0 red;
-}
+ useEffect(() => {
+    if (!apiRef.current) return;
 
-.b {
-  /* mimic border-top: 1px solid blue */
-  box-shadow: inset 0 1px 0 0 blue;
-}
+    apiRef.current.isExternalFilterPresent = () => !cond;
+
+    apiRef.current.doesExternalFilterPass = (node: RowNode) => {
+      if (cond) return true; // filtering disabled
+
+      if (node.group) {
+        return (node.allLeafChildren ?? []).some(
+          leaf => !!leaf.data?.item?.data
+        );
+      }
+      return !!node.data?.item?.data;
+    };
+
+    apiRef.current.onFilterChanged(); // trigger re-run
+  }, [cond]);
