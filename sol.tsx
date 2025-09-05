@@ -1,8 +1,9 @@
-const observer = new ResizeObserver(() => {
-  if (element) {
-    const { height, width, top, left } = element.getBoundingClientRect();
-    requestAnimationFrame(() => {
-      setDimensions({ height, width, top, left });
-    });
-  }
-});
+.a {
+  /* mimic border-bottom: 1px solid red */
+  box-shadow: inset 0 -1px 0 0 red;
+}
+
+.b {
+  /* mimic border-top: 1px solid blue */
+  box-shadow: inset 0 1px 0 0 blue;
+}
