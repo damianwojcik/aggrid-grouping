@@ -1,18 +1,13 @@
- useEffect(() => {
-    if (!apiRef.current) return;
+apiRef.current!.setGridOption("doesExternalFilterPass", (node: RowNode) => {
+  // Keep a group only if it contains at least one favourite leaf
+  if (node.group) {
+    return (node.allLeafChildren ?? []).some(
+      (leaf) => !!leaf.data?.favourite
+    );
+  }
+  // Leaf: render only favourites
+  return !!node.data?.favourite;
+});
 
-    apiRef.current.isExternalFilterPresent = () => !cond;
-
-    apiRef.current.doesExternalFilterPass = (node: RowNode) => {
-      if (cond) return true; // filtering disabled
-
-      if (node.group) {
-        return (node.allLeafChildren ?? []).some(
-          leaf => !!leaf.data?.item?.data
-        );
-      }
-      return !!node.data?.item?.data;
-    };
-
-    apiRef.current.onFilterChanged(); // trigger re-run
-  }, [cond]);
+// after setting/changing the filter:
+apiRef.current!.onFilterChanged();
