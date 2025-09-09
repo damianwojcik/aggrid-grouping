@@ -1,22 +1,20 @@
+// one tiny arrow fn, tolerant to both ContextProvider / ContextProvier
 const wrapExtensions = (
-  extensions: { name: string; ContextProvider?: React.ComponentType<any> }[],
+  extensions: Array<{ name: string; ContextProvider?: React.ComponentType<any>; ContextProvier?: React.ComponentType<any> }>,
   inner: JSX.Element,
   extensionProps?: Record<string, any>
 ) =>
-  extensions.reduceRight((acc, extension) => {
-    const ContextProvider = extension.ContextProvider;
-    if (!ContextProvider) return acc;
+  extensions.reduceRight((acc, extension, index) => {
+    const RawContextProvider =
+      extension.ContextProvider ?? (extension as any).ContextProvier;
+    if (!RawContextProvider) return acc;
+
     const propsForExtension = extensionProps?.[extension.name] || {};
-    return <ContextProvider {...propsForExtension}>{acc}</ContextProvider>;
+
+    // keep keys like your previous reducer (not strictly required but harmless)
+    return (
+      <RawContextProvider key={index} {...propsForExtension}>
+        {acc}
+      </RawContextProvider>
+    );
   }, inner);
-
-
-  return wrapExtensions(
-  extensions,
-  <ExtensionsContextProvider extensions={extensions}>
-    {children}
-  </ExtensionsContextProvider>,
-  {
-    views: { test: "from panel" }, // 👈 passed to ViewsContextProvider
-  }
-);
