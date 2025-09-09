@@ -1,41 +1,22 @@
-// framework/AxionFrameworkContextProvider.tsx
-import React from 'react';
+const wrapExtensions = (
+  extensions: { name: string; ContextProvider?: React.ComponentType<any> }[],
+  inner: JSX.Element,
+  extensionProps?: Record<string, any>
+) =>
+  extensions.reduceRight((acc, extension) => {
+    const ContextProvider = extension.ContextProvider;
+    if (!ContextProvider) return acc;
+    const propsForExtension = extensionProps?.[extension.name] || {};
+    return <ContextProvider {...propsForExtension}>{acc}</ContextProvider>;
+  }, inner);
 
-export function AxionFrameworkContextProvider({
+
+  return wrapExtensions(
   extensions,
-  extensionProps = {}, // { [name]: props }
-  children,
-}) {
-  // Wrap children with each extension provider, passing props by name
-  const wrapped = extensions
-    .map((ext) => {
-      const Provider = ext.ContextProvider;
-      const propsForThisExt = extensionProps[ext.name] || {};
-      return (inner) => <Provider {...propsForThisExt}>{inner}</Provider>;
-    })
-    .reduceRight((acc, WithP) => WithP(acc), children);
-
-  // Add your other app providers around `wrapped` if needed
-  return wrapped;
-}
-
-
-// package/panel/Panel.tsx
-import React from 'react';
-import { AxionFrameworkContextProvider } from 'framework/AxionFrameworkContextProvider';
-import { extensionConfig as viewsExt } from 'package/views/extensionConfig';
-
-const extensions = [viewsExt];
-
-export default function Panel() {
-  return (
-    <AxionFrameworkContextProvider
-      extensions={extensions}
-      extensionProps={{
-        views: { test: 'value known only in panel' }, // ← real values live here
-      }}
-    >
-      <App />
-    </AxionFrameworkContextProvider>
-  );
-}
+  <ExtensionsContextProvider extensions={extensions}>
+    {children}
+  </ExtensionsContextProvider>,
+  {
+    views: { test: "from panel" }, // 👈 passed to ViewsContextProvider
+  }
+);
