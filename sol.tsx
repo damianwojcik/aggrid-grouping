@@ -1,19 +1,20 @@
-// build providers exactly like before, but with props baked in
-const extensionProviders: React.ComponentType<any>[] = extensions
-  .filter((ext) => !!ext.ContextProvider)
-  .map((ext) => {
-    const ContextProvider = ext.ContextProvider!;
-    const propsForExtension = extensionProps?.[ext.name] || {};
-    // return a component that only needs {children}
-    return ({ children }: { children: React.ReactNode }) => (
-      <ContextProvider {...propsForExtension}>{children}</ContextProvider>
-    );
-  });
+// one small helper; no wrapper components created
+const wrapExtensions = (
+  extensions: { name: string; ContextProvider?: React.ComponentType<any> }[],
+  inner: React.ReactNode,
+  extensionProps?: Record<string, any>
+) =>
+  extensions
+    .filter((e) => !!e.ContextProvider)
+    .reduceRight((acc, ext, index) => {
+      const ContextProvider = ext.ContextProvider!;
+      const propsForExtension = extensionProps?.[ext.name];
 
-// use your existing reducer
-return wrapWithProviders(
-  extensionProviders,
-  <ExtensionsContextProvider extensions={extensions}>
-    {children}
-  </ExtensionsContextProvider>
-);
+      return propsForExtension ? (
+        <ContextProvider key={index} {...propsForExtension}>
+          {acc}
+        </ContextProvider>
+      ) : (
+        <ContextProvider key={index}>{acc}</ContextProvider>
+      );
+    }, inner);
