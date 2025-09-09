@@ -1,20 +1,14 @@
-// one small helper; no wrapper components created
+// Extension has optional ContextProvider
+type Extension = { name: string; ContextProvider?: React.ComponentType<any> };
+
 const wrapExtensions = (
-  extensions: { name: string; ContextProvider?: React.ComponentType<any> }[],
+  extensions: Extension[],
   inner: React.ReactNode,
   extensionProps?: Record<string, any>
 ) =>
-  extensions
-    .filter((e) => !!e.ContextProvider)
-    .reduceRight((acc, ext, index) => {
-      const ContextProvider = ext.ContextProvider!;
-      const propsForExtension = extensionProps?.[ext.name];
-
-      return propsForExtension ? (
-        <ContextProvider key={index} {...propsForExtension}>
-          {acc}
-        </ContextProvider>
-      ) : (
-        <ContextProvider key={index}>{acc}</ContextProvider>
-      );
-    }, inner);
+  extensions.reduceRight((acc, ext) => {
+    const ContextProvider = ext.ContextProvider;
+    if (!ContextProvider) return acc; // skip extensions without a provider
+    const props = extensionProps?.[ext.name] || {};
+    return <ContextProvider key={ext.name} {...props}>{acc}</ContextProvider>;
+  }, inner);
