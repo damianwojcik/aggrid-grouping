@@ -1,25 +1,13 @@
-const ExtensionsHost = ({
-  extensions,
+export const ExtensionsContextProvider = ({
   children,
-}: {
-  extensions: { name: string; ContextProvider?: React.ComponentType<any> }[];
-  children: React.ReactNode;
-}) => {
-  const search = useSearchContext();
-  const storage = useStorageContext();
+  extensions,
+  extensionProps,
+}: ProviderProps) => {
+  const contextValue = useMemo(() => ({ extensions }), [extensions]);
 
-  const extensionProps = React.useMemo(
-    () => ({
-      views: { test: "from panel", search, storage },
-    }),
-    [search, storage]
-  );
-
-  return wrapExtensions(
-    extensions,
-    <ExtensionsContextProvider extensions={extensions}>
+  return (
+    <ExtensionsContext.Provider value={contextValue}>
       {children}
-    </ExtensionsContextProvider>,
-    extensionProps
+    </ExtensionsContext.Provider>
   );
 };
