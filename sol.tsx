@@ -1,27 +1,23 @@
-type MenuItem = string | community.MenuItemDef;
+// ---- section enum ----
+export enum ContextMenuItemsSection {
+  Copy = "Copy",
+  Export = "Export",
+  // add more if needed
+}
 
-
-const tagSection = <T extends MenuItem>(item: T, section: SectionType): T => {
-  if (typeof item !== "string") {
-    (item as any)[SECTION] = section;
-  }
-  return item;
-};
-
-const isInSection = (item: MenuItem, section: SectionType): boolean =>
-  typeof item !== "string" && (item as any)?.[SECTION] === section;
+type MenuItem = string | (community.MenuItemDef & { contextMenuItemSection?: ContextMenuItemsSection });
 
 // ---- insertion helper ----
 const insertBeforeSection = (
   items: MenuItem[],
-  section: SectionType,
+  section: ContextMenuItemsSection,
   newItem: MenuItem
 ): MenuItem[] => {
   const out: MenuItem[] = [];
   let inserted = false;
 
   for (const it of items) {
-    if (!inserted && isInSection(it, section)) {
+    if (!inserted && typeof it !== "string" && it.contextMenuItemSection === section) {
       out.push(newItem);
       inserted = true;
     }
@@ -29,11 +25,12 @@ const insertBeforeSection = (
   }
 
   if (!inserted) {
-    out.push(newItem); // fallback: append at end
+    out.push(newItem); // fallback at end
   }
 
   return out;
 };
+
 
 
 // ---- main hook ----
@@ -46,16 +43,15 @@ export const useContextMenuItems = () => {
       const node = params.node;
       const data: BackendRow = node?.data;
       const ticketId = data?.[Field.__TicketId] ?? "";
+
       const copyTicketIdItem = copyValue("Copy ticket id", ticketId, node);
 
-      // tag built-in "Copy ..." items
-      const taggedDraft = menuItemsDraft.map(item =>
-        typeof item !== "string" && item.name?.startsWith("Copy")
-          ? tagSection(item, SectionType.Copy)
-          : item
-      );
+      // here you can tag draft items you control
+      // e.g. if you add "Copy cell" yourself:
+      // menuItemsDraft.push({ name: "Copy cell", ..., contextMenuItemSection: ContextMenuItemsSection.Copy });
 
-      return insertBeforeSection(taggedDraft, SectionType.Copy, copyTicketIdItem);
+      // insert Copy Ticket Id before Copy section
+      return insertBeforeSection(menuItemsDraft, ContextMenuItemsSection.Copy, copyTicketIdItem);
     }
   );
 
