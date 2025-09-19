@@ -1,27 +1,30 @@
-const getContextMenuItems = hooks.useDynamicCallback(
-  (params: community.GetContextMenuItemsParams): ReturnType<community.GetContextMenuItems> => {
-    const node = params.node;
-    const data: BackendRow = node?.data;
-    const ticketId = data?.[Field.__TicketId] ?? '';
-    const copyTicketId = [copyValue('Copy ticket id', ticketId, node)];
+function insertBefore<T>(
+  items: T[],
+  matcher: (item: T) => boolean,
+  newItem: T
+): T[] {
+  const index = items.findIndex(matcher);
+  if (index === -1) return [...items, newItem]; // fallback: append at end
+  return [
+    ...items.slice(0, index),
+    newItem,
+    ...items.slice(index),
+  ];
+}
 
-    const draft = params.menuItems as (string | community.MenuItemDef)[];
-
-    // Find the first "Copy" section
-    const copyIdx = draft.findIndex(
-      (it) => typeof it !== 'string' && (it as community.MenuItemDef).sectionType === community.SectionType.Copy
-    );
-
-    // Insert our item before that section (or append if not found)
-    if (copyIdx >= 0) {
-      return [
-        ...draft.slice(0, copyIdx),
-        ...copyTicketId,
-        ...draft.slice(copyIdx),
-      ];
-    }
-    return [...draft, ...copyTicketId];
-  }
+const menuItems = insertBefore(
+  menuItemsDraft,
+  (item) => (item as community.MenuItemDef).name === SectionType.Copy,
+  copyTicketId[0] // since you’re building [copyTicketId, node]
 );
 
-return { getContextMenuItems };
+
+enum SectionType {
+  Copy = "Copy",
+}
+
+const menuItems = insertBefore(
+  menuItemsDraft,
+  (item) => (item as any)[Symbol.for("sectionType")] === SectionType.Copy,
+  copyTicketId[0]
+);
