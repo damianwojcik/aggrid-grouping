@@ -3,29 +3,23 @@
     return;
   }
 
-  // Collect all params into an array of key=value strings
-  const parts: string[] = [];
-
   for (const searchParam of this.#urlOptions.searchParams) {
     if (value === null) {
-      // skip (delete case)
-      continue;
-    }
-
-    if (searchParam === this.#urlChosenSearchParam) {
-      // insert our new value with raw commas
-      parts.push(`${searchParam}=${value}`);
-    } else if (url.searchParams.has(searchParam)) {
-      // preserve other params, decoded so we don’t carry %2C
-      parts.push(`${searchParam}=${decodeURIComponent(url.searchParams.get(searchParam)!)}`);
+      url.searchParams.delete(searchParam);
+    } else {
+      // instead of url.searchParams.set(...) which encodes commas
+      url.searchParams.delete(searchParam); // remove old
+      const qs = url.searchParams.toString();
+      const raw = `${searchParam}=${value}`;
+      url = new URL(
+        `${url.origin}${url.pathname}` + (qs ? `?${qs}&${raw}` : `?${raw}`)
+      );
     }
   }
 
-  // Rebuild query manually
-  const newHref =
-    `${url.origin}${url.pathname}` + (parts.length ? `?${parts.join("&")}` : "");
-
-  if (newHref !== location.href) {
-    ContextItem.#historyReplaceState.call(history, {}, "", newHref);
+  const nextURL = url.href;
+  console.log("!!! nextUrl", nextURL, url);
+  if (nextURL !== location.href) {
+    ContextItem.#historyReplaceState.call(history, {}, "", url.href);
   }
 }
