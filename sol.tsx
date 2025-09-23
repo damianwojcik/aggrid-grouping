@@ -1,17 +1,34 @@
-const withErrorHandling = (fn) => async () => {
-  try {
-    return await fn();
-  } catch (err) {
-    console.error(`Error in ${fn.name}:`, err);
-    throw err; // rethrow if you want the caller to know
-  }
-};
+// keep inside the component (because it uses setError), but make it generic
+const withErrorHandling = useCallback(
+  <T,>(fn: () => Promise<T>) => {
+    return async (): Promise<T> => {
+      try {
+        return await fn();
+      } catch (err) {
+        setError(err as Error);
+        throw err;
+      }
+    };
+  },
+  [setError]
+);
 
-const connect = () => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => reject(new Error("Connection failed")), 500);
-  });
-};
+// connect already is: () => Promise<TerminalConnectWebClient>
+const safeConnect = useMemo(
+  () => withErrorHandling(connect),
+  [connect, withErrorHandling]
+);
 
-const safeConnect = withErrorHandling(connect);
-
+// context value now matches the type exactly
+const contextValue = useMemo(
+  () => ({
+    tcClient,
+    groupsData,
+    isConnecting,
+    isConnected: !!groupsData,
+    hasFailed: !!error,
+    targetMachineName,
+    connect: safeConnect, // ✅ () => Promise<TerminalConnectWebClient>
+  }),
+  [tcClient, groupsData, isConnecting, error, targetMachineName, safeConnect]
+);
