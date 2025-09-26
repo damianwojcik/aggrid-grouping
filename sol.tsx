@@ -67,15 +67,35 @@ export class URLInstance {
 
 //
 
-#writeURL(value: ContextItemValue, url: URLInstance) {
+// import where this file lives
+import { URLInstance } from "../utils/URLInstance"; // <- adjust path
+
+// ...
+#writeURL(value: ContextItemValue, url: URL) {
   if (!this.#urlOptions) return;
 
+  // Wrap the incoming URL with our helper
+  const ui = new URLInstance(url);
+
+  // Replace all occurrences of each configured searchParam
   for (const searchParam of this.#urlOptions.searchParams) {
-    url.set(searchParam, value === null ? null : String(value));
+    if (value === null) {
+      ui.set(searchParam, null);         // delete
+      console.log(`[ContextItem.writeURL] delete '${searchParam}'`);
+    } else {
+      ui.set(searchParam, String(value)); // set single value
+      console.log(
+        `[ContextItem.writeURL] set '${searchParam}'='${String(value)}'`
+      );
+    }
   }
 
-  const nextURL = url.toDecodedHref();
+  // Human-readable URL (spaces -> "_", no %20 etc.)
+  const nextURL = ui.toDecodedHref();
+
   if (nextURL !== location.href) {
+    // keep your existing indirection to replaceState
     ContextItem.#historyReplaceState.call(history, {}, "", nextURL);
+    console.log("[ContextItem.writeURL] replaceState ->", nextURL);
   }
 }
