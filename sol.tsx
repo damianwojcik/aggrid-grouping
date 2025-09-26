@@ -1,18 +1,81 @@
-export const getRequest = async <T>(url: string): Promise<T> => {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+export class URLInstance {
+  #url: URL;
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(JSON.stringify(error));
+  constructor(url?: URL | string) {
+    if (url instanceof URL) {
+      this.#url = new URL(url.toString());
+    } else if (typeof url === 'string') {
+      this.#url = new URL(url, window.location.href);
+    } else {
+      this.#url = new URL(window.location.href);
+    }
+    console.log('[URLInstance] init:', this.#url.toString());
   }
 
-  return (await response.json()) as T;
-};
+  /** Decoded value (or null if not found). */
+  get(name: string): string | null {
+    const raw = this.#url.searchParams.get(name);
+    if (raw == null) return null;
+    try {
+      const decoded = decodeURIComponent(raw);
+      console.log(`[URLInstance.get] ${name} -> '${decoded}'`);
+      return decoded;
+    } catch {
+      return raw;
+    }
+  }
+
+  /** Replace all occurrences with one value (or delete if null/empty). */
+  set(name: string, value?: string | null): void {
+    this.#url.searchParams.delete(name);
+    if (value !== null && value !== undefined && value !== '') {
+      this.#url.searchParams.set(name, value);
+      console.log(`[URLInstance.set] '${name}'='${value}'`);
+    } else {
+      console.log(`[URLInstance.set] deleted '${name}'`);
+    }
+  }
+
+  /** Build human-readable query string: spaces -> "_" ; no percent-encoding. */
+  private toDecodedSearch(): string {
+    const parts: string[] = [];
+    for (const [k, v] of this.#url.searchParams.entries()) {
+      const prettyVal = v.replace(/ /g, '_');
+      parts.push(`${k}=${prettyVal}`);
+    }
+    return parts.length ? '?' + parts.join('&') : '';
+  }
+
+  /** Human-readable href (decoded query). */
+  toDecodedHref(): string {
+    return (
+      this.#url.origin +
+      this.#url.pathname +
+      this.toDecodedSearch() +
+      this.#url.hash
+    );
+  }
+
+  /** Native encoded URL (debugging). */
+  toString(): string {
+    return this.#url.toString();
+  }
+}
 
 
-const data = await getRequest<GetRequestResponse>(Endpoint.List);
+
+
+//
+
+#writeURL(value: ContextItemValue, url: URLInstance) {
+  if (!this.#urlOptions) return;
+
+  for (const searchParam of this.#urlOptions.searchParams) {
+    url.set(searchParam, value === null ? null : String(value));
+  }
+
+  const nextURL = url.toDecodedHref();
+  if (nextURL !== location.href) {
+    ContextItem.#historyReplaceState.call(history, {}, "", nextURL);
+  }
+}
