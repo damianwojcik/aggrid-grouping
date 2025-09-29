@@ -1,13 +1,12 @@
-set(name: string, value?: string | null): void {
-  if (value === undefined) {
-    return;
-  }
+Hi [Manager’s Name],
 
-  if (value === null || value === "") {
-    this.#url.searchParams.delete(name);
-    return;
-  }
+I found out on Friday that I will need to undergo cervical spine surgery, and this morning (Monday) the hospital confirmed that I should report on Thursday, October 2nd for the procedure.
 
-  const encoded = value.replace(/ /g, spaceCharReplacement);
-  this.#url.searchParams.set(name, encoded);
-}
+Following the surgery, my doctors expect that I will be on medical leave for about 4–6 weeks. I will provide the official sick leave documentation once I receive it.
+
+Could you please advise me on who I should hand over my current tasks to before Thursday? I want to make sure everything is properly covered.
+
+Thank you for your understanding and support.
+
+Best regards,
+Damian
