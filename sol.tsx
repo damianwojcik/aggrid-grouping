@@ -26,11 +26,8 @@ updatedViewExtra.search.querySpecs = mergeQuerySpecsPreservingSort({
 return updatedViewExtra;
 
 function mergeQuerySpecsPreservingSort({
-  incoming,
-  existing,
-}: {
-  incoming: QuerySpecs;
-  existing: QuerySpecs;
+  incoming:QuerySpecs,
+  existing:QuerySpecs,
 }): QuerySpecs {
   return Object.fromEntries(
     Object.entries(incoming).map(([name, incomingSpec]) => {
@@ -50,3 +47,13 @@ function mergeQuerySpecsPreservingSort({
     })
   );
 }
+
+
+type MergeQuerySpecsArgs = {
+  incoming: QuerySpecs;
+  existing: QuerySpecs;
+};
+
+function mergeQuerySpecsPreservingSort(
+  { incoming, existing }: MergeQuerySpecsArgs
+): QuerySpecs {
