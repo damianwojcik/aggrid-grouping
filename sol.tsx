@@ -1,59 +1,59 @@
-if (initialImport) {
-  const incomingQuerySpecs =
-    defaultizedIncomingViewExtra.search.querySpecs;
 
-  defaultizedIncomingViewExtra.search.querySpecs =
-    querySpecsWithFilteringSpecsLocked(incomingQuerySpecs, true);
 
-  return defaultizedIncomingViewExtra;
-}
 
-const updatedViewExtra =
-  defaultizeExtra(existingViewExtra, viewExtraSchema);
+export interface CreateStorageModelOptions<
+  T extends z.ZodObject<{}>
+> {
+  createStorageOptions: <Content extends UnknownRecord>(
+    guid: string
+  ) => Pick<StorageOptions<Content>, 'storage'>;
 
-const incomingQuerySpecs =
-  defaultizedIncomingViewExtra.search.querySpecs;
-
-const existingQuerySpecs =
-  updatedViewExtra.search.querySpecs;
-
-// 🔑 merge logic
-updatedViewExtra.search.querySpecs = mergeQuerySpecsPreservingSort({
-  incoming: incomingQuerySpecs,
-  existing: existingQuerySpecs,
-});
-
-return updatedViewExtra;
-
-function mergeQuerySpecsPreservingSort({
-  incoming:QuerySpecs,
-  existing:QuerySpecs,
-}): QuerySpecs {
-  return Object.fromEntries(
-    Object.entries(incoming).map(([name, incomingSpec]) => {
-      const existingSpec = existing[name];
-
-      return [
-        name,
-        {
-          ...incomingSpec,
-          sortingSpec: existingSpec?.sortingSpec,
-          filteringSpec: incomingSpec.filteringSpec?.map(m => ({
-            ...m,
-            locked: true,
-          })),
-        },
-      ];
-    })
-  );
+  customViewExtraSchema?: (
+    baseViewExtraSchema: typeof viewExtraSchema
+  ) => T;
 }
 
 
-type MergeQuerySpecsArgs = {
-  incoming: QuerySpecs;
-  existing: QuerySpecs;
+export const createContentSchema = <
+  T extends Pick<
+    CreateStorageModelOptions<z.ZodObject<{}>>,
+    'customViewExtraSchema'
+  >,
+>({
+  customViewExtraSchema,
+}: T) => {
+  // Value-level narrowing → perfect type inference
+  const extraSchema =
+    customViewExtraSchema?.(viewExtraSchema) ?? viewExtraSchema;
+
+  return z.object({
+    version: z.string(),
+    settings: z.object({}),
+    viewsComponent: createViewsComponentSchema(extraSchema),
+  });
 };
 
-function mergeQuerySpecsPreservingSort(
-  { incoming, existing }: MergeQuerySpecsArgs
-): QuerySpecs {
+
+
+export const createStorageModel = <
+  T extends CreateStorageModelOptions<z.ZodObject<{}>>
+>(
+  options: T
+) => {
+  const schema = createContentSchema(options);
+
+  type Content = z.output<typeof schema>;
+
+  const initialContent: Content = {
+    version: '0.0.1',
+    settings: {},
+    viewsComponent: initialViewsComponentContent,
+  };
+
+  return {
+    schema,
+    initialContent,
+    createStorageOptions: options.createStorageOptions,
+    cachePolicy: CachePolicy.Persistent,
+  };
+};
