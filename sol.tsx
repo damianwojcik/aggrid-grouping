@@ -1,59 +1,19 @@
-
-
-
-export interface CreateStorageModelOptions<
-  T extends z.ZodObject<{}>
-> {
-  createStorageOptions: <Content extends UnknownRecord>(
-    guid: string
-  ) => Pick<StorageOptions<Content>, 'storage'>;
-
-  customViewExtraSchema?: (
-    baseViewExtraSchema: typeof viewExtraSchema
-  ) => T;
-}
-
+type ResolveViewExtraSchema<T> =
+  T extends { customViewExtraSchema: (base: typeof viewExtraSchema) => infer R }
+    ? R
+    : typeof viewExtraSchema;
 
 export const createContentSchema = <
-  T extends Pick<
-    CreateStorageModelOptions<z.ZodObject<{}>>,
-    'customViewExtraSchema'
-  >,
+  T extends Pick<CreateStorageModelOptions<z.ZodObject<{}>>, 'customViewExtraSchema'>
 >({
   customViewExtraSchema,
-}: T) => {
-  // Value-level narrowing → perfect type inference
-  const extraSchema =
-    customViewExtraSchema?.(viewExtraSchema) ?? viewExtraSchema;
-
-  return z.object({
+}: T) =>
+  z.object({
     version: z.string(),
     settings: z.object({}),
-    viewsComponent: createViewsComponentSchema(extraSchema),
+    viewsComponent: createViewsComponentSchema(
+      (customViewExtraSchema
+        ? customViewExtraSchema(viewExtraSchema)
+        : viewExtraSchema) as ResolveViewExtraSchema<T>
+    ),
   });
-};
-
-
-
-export const createStorageModel = <
-  T extends CreateStorageModelOptions<z.ZodObject<{}>>
->(
-  options: T
-) => {
-  const schema = createContentSchema(options);
-
-  type Content = z.output<typeof schema>;
-
-  const initialContent: Content = {
-    version: '0.0.1',
-    settings: {},
-    viewsComponent: initialViewsComponentContent,
-  };
-
-  return {
-    schema,
-    initialContent,
-    createStorageOptions: options.createStorageOptions,
-    cachePolicy: CachePolicy.Persistent,
-  };
-};
