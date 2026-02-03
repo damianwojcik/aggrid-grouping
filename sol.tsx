@@ -1,44 +1,7 @@
-
-type GetCustomViewExtra<T> =
-  T extends { customViewExtraSchema(param: any): infer R }
-    ? R extends z.ZodTypeAny
-      ? R
-      : typeof viewExtraSchema
-    : typeof viewExtraSchema;
-
-/* ---------------------------- schema ----------------------------- */
-
-export const createContentSchema = <
-  T extends Pick<
-    CreateStorageModelOptions<z.ZodTypeAny>,
-    'customViewExtraSchema'
-  >
->(
-  options: T,
-) => {
-  const extraSchema =
-    options.customViewExtraSchema?.(viewExtraSchema) ?? viewExtraSchema;
-
-  return z.object({
-    version: z.string(),
-    settings: z.object({}),
-    viewsComponent: createViewsComponentSchema(extraSchema),
-  });
-};
-
-/* ----------------------------- model ----------------------------- */
-
-export interface CreateStorageModelOptions<
-  T extends z.ZodTypeAny,
-> {
-  createStorageOptions: <Content extends UnknownRecord>(
-    guid: string,
-  ) => Pick<
-    StorageOptions<Content, Content, Content, Content, Content>,
-    'storage'
-  >;
-
-  customViewExtraSchema?: (
-    baseViewExtraSchema: typeof viewExtraSchema,
-  ) => T;
-}
+- You are a playwright test generator.
+- You are given a scenario and you need to generate a playwright test for it.
+- DO NOT generate test code based on the scenario alone. 
+- DO run steps one by one using the tools provided by the Playwright MCP.
+- Only after all steps are completed, emit a Playwright TypeScript test that uses @playwright/test based on message history
+- Save generated test file in the tests directory
+- Execute the test file and iterate until the test passes
