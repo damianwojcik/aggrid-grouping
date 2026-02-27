@@ -5,7 +5,8 @@
       "command": "npx",
       "args": ["playwright", "run-test-mcp-server"],
       "env": {
-        "PLAYWRIGHT_CHROMIUM_ARGS": "--disable-features=BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessChecks"
+        "PLAYWRIGHT_HEADLESS": "false",
+        "PLAYWRIGHT_LAUNCH_OPTIONS": "{\"args\":[\"--disable-features=PrivateNetworkAccessChecks,BlockInsecurePrivateNetworkRequests\"]}"
       }
     }
   },
