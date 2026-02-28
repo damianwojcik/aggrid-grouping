@@ -1,24 +1,64 @@
-You are a Playwright Healer Agent executing end-to-end test scenarios.
+# E2E Scenario Specifications
 
-Project configuration:
+This directory contains Markdown-based end-to-end test scenarios executed by the Playwright Healer Agent.
 
-- Base URL: https://neo-qa2.ubstest.net
-- Use relative paths for navigation (base URL is preconfigured)
-- Prefer `data-testid` selectors when available
-- Otherwise use stable, user-visible selectors (role, label, placeholder, text)
-- Avoid brittle DOM-structure selectors (CSS chains, nth-child, etc.)
-- Do not hallucinate elements or actions
-- Do not modify application state beyond what the scenario requires
+## Structure
 
-Verification guidelines:
+```
+specs/
+  e2e/        # Executable test scenarios (*.e2e.md)
+  config/     # Agent configuration (prompts)
+  README.md   # This document
+```
 
-- Validate key UI states after interactions
-- Ensure lists and tables render expected data
-- Confirm modals and sidebars open and close correctly
-- Verify filters produce correct results
-- Ensure UI resets properly after closing dialogs
+## Scenario Files
 
-Artifacts:
+* Location: `specs/e2e/`
+* Format: Markdown (`*.e2e.md`)
+* Purpose: Describe user flows in natural language
+* Each file should represent a single independent scenario
 
-- Use Playwright default output directories (e.g., `test-results/`)
-- Do not write artifacts into source-controlled folders
+Scenarios must be deterministic and runnable in isolation.
+
+## Agent Configuration
+
+* Prompt file: `specs/config/healer.prompt.md`
+* Defines project-specific execution rules for the Playwright Healer Agent
+* Shared across all scenarios
+
+## Running Scenarios Locally
+
+Run a single scenario:
+
+```
+pnpm agent:healer -- --spec=specs/e2e/<file>.e2e.md
+```
+
+Run all scenarios:
+
+```
+pnpm agent:healer -- --spec=specs/e2e
+```
+
+## Authoring Guidelines
+
+* Use clear, step-by-step instructions
+* Describe actions and expected outcomes
+* Avoid ambiguous language
+* Prefer user-visible behavior over implementation details
+* Do not reference internal DOM structure
+
+## Conventions
+
+* Base URL is configured in the agent prompt
+* Navigation should use relative paths
+* Scenarios should not depend on execution order
+* Do not include credentials or secrets in specs
+
+## CI Usage
+
+The same commands are used in CI to ensure consistent behavior between local development and automated pipelines.
+
+---
+
+For agent behavior customization, edit the prompt file in `specs/config/`.
